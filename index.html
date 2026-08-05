@@ -1,0 +1,1367 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+  ============================================================================
+  O que ainda falta preencher (procure por "[" no arquivo):
+    - os cartões de projeto  (seção 02)
+    - os quatro números      (seção 01)
+    - o ID do Formspree      (procure por SEU_ID_AQUI)
+  Detalhes em README.md e MELHORIAS.md.
+  ============================================================================
+-->
+
+<title>Raul Guilherme — back-end, redes e segurança</title>
+<meta name="description" content="Raul Guilherme, 21 anos. Analista de helpdesk júnior e estudante de ADS. Back-end, redes e segurança da informação.">
+
+<meta property="og:title" content="Raul Guilherme — back-end, redes e segurança">
+<meta property="og:description" content="Analista de helpdesk júnior e estudante de ADS. Back-end, redes e segurança da informação.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+<script>
+  /* Roda antes da renderização para o tema não piscar ao carregar a página. */
+  (function () {
+    document.documentElement.classList.add('js');
+    try {
+      var salvo = localStorage.getItem('tema');
+      if (salvo === 'light' || salvo === 'dark') {
+        document.documentElement.setAttribute('data-theme', salvo);
+      } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {
+      /* localStorage bloqueado (aba anônima, cookies desligados): fica no padrão. */
+    }
+  })();
+</script>
+
+<style>
+/* ==========================================================================
+   1. TOKENS
+   Únicas cores nomeadas do arquivo. Nenhum hexadecimal fora deste bloco.
+   Variações (hover, translucidez) saem de color-mix() sobre estes tokens.
+   ========================================================================== */
+
+:root {
+  /* --- tema escuro (padrão) --- */
+  --bg:      #0D1117;
+  --surface: #151B23;
+  --line:    #2B3440;
+  --text:    #E8EDF4;
+  --muted:   #9BA7B7;
+  --accent:  #5CC8F5;
+
+  /* --- tipografia --- */
+  --f-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  --t-hero:  clamp(2.5rem, 7vw, 4.5rem);
+  --t-secao: clamp(1.75rem, 4vw, 2.5rem);
+  --t-card:  clamp(1.125rem, 2vw, 1.3rem);
+  --t-corpo: clamp(1rem, 1.6vw, 1.0625rem);
+  --t-peq:   clamp(0.8125rem, 1.2vw, 0.875rem);
+
+  /* --- espaçamento e medidas --- */
+  --esp-secao: clamp(4rem, 10vw, 7rem);
+  --esp-bloco: clamp(1.5rem, 4vw, 2.5rem);
+  --gap:       clamp(1rem, 2.5vw, 1.5rem);
+  --largura:   1100px;
+  --alt-nav:   64px;
+  --raio:      4px;
+}
+
+:root[data-theme="light"] {
+  --bg:      #F7F8FA;
+  --surface: #FFFFFF;
+  --line:    #DDE2E9;
+  --text:    #12171E;
+  --muted:   #58616E;
+  --accent:  #0A6FA8;
+}
+
+/* ==========================================================================
+   2. RESET E BASE
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+* { margin: 0; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--f-sans);
+  font-size: var(--t-corpo);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color .25s ease, color .25s ease;
+}
+
+img, svg { display: block; max-width: 100%; }
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+::selection { background: var(--accent); color: var(--bg); }
+
+/* --- foco visível: obrigatório em tudo que recebe foco --- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+/* tira o anel de quem clicou com o mouse, nunca de quem chegou pelo teclado */
+:focus:not(:focus-visible) { outline: none; }
+
+/* --- utilitários --- */
+.envolve {
+  width: 100%;
+  max-width: var(--largura);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 2rem);
+}
+
+.so-leitor {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* primeiro item da tabulação: pula a navegação e vai direto ao conteúdo */
+.pular {
+  position: absolute;
+  left: 1rem;
+  top: -100%;
+  z-index: 100;
+  background: var(--accent);
+  color: var(--bg);
+  padding: .6rem 1rem;
+  border-radius: var(--raio);
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  text-decoration: none;
+  transition: top .2s ease;
+}
+.pular:focus { top: 1rem; }
+
+/* ==========================================================================
+   3. BARRA FIXA
+   ========================================================================== */
+
+.topo {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  height: var(--alt-nav);
+  display: flex;
+  align-items: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.topo .envolve {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logo {
+  font-family: var(--f-mono);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: -.02em;
+  flex-shrink: 0;
+}
+.logo span { color: var(--accent); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(.5rem, 2vw, 1.5rem);
+  list-style: none;
+  padding: 0;
+  /* em tela estreita a navegação rola na horizontal em vez de sumir */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-links::-webkit-scrollbar { display: none; }
+
+.nav-links a {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: .35rem .1rem;
+  transition: color .18s ease;
+}
+.nav-links a:hover { color: var(--text); }
+
+.btn-tema {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 38px; height: 38px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--raio);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .18s ease, border-color .18s ease;
+}
+.btn-tema:hover { color: var(--text); border-color: var(--muted); }
+.btn-tema svg { width: 17px; height: 17px; }
+
+/* mostra sol OU lua conforme o tema ativo */
+.btn-tema .icone-claro { display: none; }
+:root[data-theme="light"] .btn-tema .icone-claro { display: block; }
+:root[data-theme="light"] .btn-tema .icone-escuro { display: none; }
+
+/* ==========================================================================
+   4. SEÇÕES — estrutura comum
+   ========================================================================== */
+
+main { padding-top: var(--alt-nav); }
+
+section {
+  padding-block: var(--esp-secao);
+  /* impede que a barra fixa cubra o título ao navegar por âncora */
+  scroll-margin-top: calc(var(--alt-nav) + 1rem);
+}
+
+.rotulo {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--accent);
+  letter-spacing: .04em;
+  margin-bottom: .75rem;
+}
+
+.titulo-secao {
+  font-size: var(--t-secao);
+  font-weight: 700;
+  letter-spacing: -.03em;
+  line-height: 1.15;
+  margin-bottom: var(--esp-bloco);
+  padding-bottom: var(--esp-bloco);
+  border-bottom: 1px solid var(--line);
+  max-width: 24ch;
+}
+
+/* ==========================================================================
+   5. HERO
+   ========================================================================== */
+
+.hero {
+  min-height: calc(100svh - var(--alt-nav));
+  display: flex;
+  align-items: center;
+  padding-block: var(--esp-secao);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: .35rem .85rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2rem);
+}
+
+.ponto {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  animation: pulsa 2.4s ease-in-out infinite;
+}
+@keyframes pulsa {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .35; }
+}
+
+.hero h1 {
+  font-size: var(--t-hero);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -.04em;
+  max-width: 18ch;
+  margin-bottom: clamp(1.25rem, 3vw, 1.75rem);
+}
+.hero h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.hero .sub {
+  color: var(--muted);
+  max-width: 58ch;
+  font-size: clamp(1.0625rem, 2vw, 1.25rem);
+  margin-bottom: clamp(2rem, 5vw, 2.75rem);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-bottom: clamp(2.5rem, 6vw, 4rem);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-family: var(--f-sans);
+  font-size: var(--t-corpo);
+  font-weight: 500;
+  padding: .7rem 1.4rem;
+  border-radius: var(--raio);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.btn-cheio {
+  background: var(--accent);
+  color: var(--bg);
+}
+.btn-cheio:hover {
+  background: color-mix(in srgb, var(--accent) 82%, var(--text));
+}
+
+.btn-contorno {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--line);
+}
+.btn-contorno:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1rem, 3vw, 2rem);
+  padding-top: clamp(1.5rem, 4vw, 2rem);
+  border-top: 1px solid var(--line);
+}
+.hero-links a {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .18s ease;
+}
+.hero-links a:hover { color: var(--accent); }
+
+/* ==========================================================================
+   6. SOBRE
+   ========================================================================== */
+
+.sobre-texto {
+  max-width: 62ch;
+  display: grid;
+  gap: 1.1rem;
+  color: var(--muted);
+}
+.sobre-texto strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--gap);
+  margin-top: clamp(2.5rem, 6vw, 3.5rem);
+}
+
+.numero {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--raio);
+  padding: 1.25rem;
+}
+.numero b {
+  display: block;
+  font-family: var(--f-mono);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: -.03em;
+  line-height: 1.1;
+}
+.numero span {
+  display: block;
+  font-size: var(--t-peq);
+  color: var(--muted);
+  margin-top: .35rem;
+}
+
+/* ==========================================================================
+   7. PROJETOS
+   ========================================================================== */
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: var(--esp-bloco);
+}
+
+.filtro {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  padding: .4rem .9rem;
+  border-radius: 100px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .18s ease, border-color .18s ease, background-color .18s ease;
+}
+.filtro:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+/* o estado ativo vive em aria-pressed, não numa classe paralela */
+.filtro[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+
+.grade-projetos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--gap);
+}
+
+.projeto {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--raio);
+  padding: clamp(1.25rem, 3vw, 1.6rem);
+  transition: border-color .2s ease, transform .2s ease;
+}
+.projeto:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+/* escondido pelo filtro: sai do fluxo e da ordem de tabulação */
+.projeto[hidden] { display: none; }
+
+.projeto .tag {
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  color: var(--accent);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: .9rem;
+}
+
+.projeto h3 {
+  font-size: var(--t-card);
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.25;
+  margin-bottom: .6rem;
+}
+
+.projeto p {
+  color: var(--muted);
+  font-size: var(--t-peq);
+  margin-bottom: 1.1rem;
+}
+
+.projeto .stack {
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  color: var(--muted);
+  margin-top: auto;
+  padding-bottom: 1rem;
+}
+
+.projeto .repo {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--text);
+  text-decoration: none;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  width: 100%;
+  transition: color .18s ease;
+}
+.projeto .repo:hover { color: var(--accent); }
+.projeto .repo svg { width: 12px; height: 12px; }
+
+.vazio {
+  color: var(--muted);
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  padding: 2rem 0;
+}
+.vazio[hidden] { display: none; }
+
+/* ==========================================================================
+   8. STACK
+   Agrupada por área: 20 itens em lista corrida viram parede.
+   ========================================================================== */
+
+.grupo + .grupo { margin-top: clamp(2rem, 5vw, 3rem); }
+
+.grupo-titulo {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: .04em;
+  margin-bottom: 1.1rem;
+  padding-bottom: .6rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.niveis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: clamp(1.1rem, 3vw, 1.6rem);
+}
+
+.nivel-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: .6rem;
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+}
+.nivel-topo .valor { color: var(--muted); }
+
+/* a barra é decorativa: o número já está no texto acima, legível por leitor de tela */
+.barra {
+  height: 5px;
+  background: var(--line);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.barra i {
+  display: block;
+  height: 100%;
+  width: var(--nivel);
+  background: var(--accent);
+  border-radius: 100px;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform .9s cubic-bezier(.2, .7, .2, 1);
+}
+.revelado .barra i { transform: scaleX(1); }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.chip {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--raio);
+  padding: .35rem .8rem;
+}
+
+.nota-escala {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--muted);
+  margin-bottom: clamp(2rem, 4vw, 2.5rem);
+  max-width: 60ch;
+}
+
+/* ==========================================================================
+   9. TRAJETÓRIA
+   ========================================================================== */
+
+.linha-tempo {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.marco {
+  position: relative;
+  padding-left: clamp(1.75rem, 5vw, 2.5rem);
+  border-left: 1px solid var(--line);
+  padding-bottom: .25rem;
+}
+/* o ponto que marca cada item sobre a linha vertical */
+.marco::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: .55rem;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--accent);
+  transform: translateX(-5px);
+}
+
+.marco .ano {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--accent);
+  margin-bottom: .35rem;
+}
+.marco h3 {
+  font-size: var(--t-card);
+  font-weight: 500;
+  letter-spacing: -.02em;
+  margin-bottom: .4rem;
+}
+.marco p {
+  color: var(--muted);
+  font-size: var(--t-peq);
+  max-width: 60ch;
+}
+
+/* ==========================================================================
+   10. CONTATO E FORMULÁRIO
+   ========================================================================== */
+
+.contato-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: clamp(2rem, 5vw, 3.5rem);
+  align-items: start;
+}
+
+.contato-intro {
+  color: var(--muted);
+  max-width: 45ch;
+  margin-bottom: 1.75rem;
+}
+
+.lista-contato {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: .5rem;
+}
+.lista-contato a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--text);
+  text-decoration: none;
+  padding: .85rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--raio);
+  transition: border-color .18s ease, color .18s ease;
+}
+.lista-contato a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.lista-contato .chave { color: var(--muted); flex-shrink: 0; }
+.lista-contato .valor-contato { text-align: right; overflow-wrap: anywhere; }
+.lista-contato a:hover .chave { color: var(--accent); }
+
+.form-campo {
+  display: grid;
+  gap: .4rem;
+  margin-bottom: 1rem;
+}
+
+.form-campo label {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--muted);
+}
+
+.form-campo input,
+.form-campo textarea {
+  font-family: var(--f-sans);
+  font-size: var(--t-corpo);
+  color: var(--text);
+  background: var(--bg);
+  /* --muted em vez de --line: borda de campo precisa de 3:1 (WCAG 1.4.11) */
+  border: 1px solid var(--muted);
+  border-radius: var(--raio);
+  padding: .7rem .85rem;
+  width: 100%;
+  transition: border-color .18s ease;
+}
+.form-campo input:hover,
+.form-campo textarea:hover { border-color: var(--text); }
+.form-campo input:focus,
+.form-campo textarea:focus { border-color: var(--accent); }
+.form-campo textarea { resize: vertical; min-height: 130px; }
+
+.form-campo input::placeholder,
+.form-campo textarea::placeholder { color: var(--muted); opacity: 1; }
+
+/* campo-armadilha de spam: invisível para gente, preenchido por robô */
+.armadilha {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.form-nota {
+  font-size: var(--t-peq);
+  color: var(--muted);
+  margin-top: .85rem;
+}
+
+/* ==========================================================================
+   11. RODAPÉ
+   ========================================================================== */
+
+.rodape {
+  border-top: 1px solid var(--line);
+  padding-block: clamp(2rem, 5vw, 3rem);
+}
+.rodape .envolve {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  color: var(--muted);
+}
+.rodape a { color: var(--muted); text-decoration: none; }
+.rodape a:hover { color: var(--accent); }
+
+/* ==========================================================================
+   12. REVELAÇÃO AO ROLAR
+   Só entra em ação com JS ativo — sem JS, o conteúdo nasce visível.
+   ========================================================================== */
+
+.js .revelar {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .55s ease, transform .55s ease;
+}
+.js .revelar.revelado {
+  opacity: 1;
+  transform: none;
+}
+
+/* ==========================================================================
+   13. AJUSTES DE TELA
+   Quase tudo se adapta sozinho por auto-fill e clamp(); aqui só o que não dá.
+   ========================================================================== */
+
+@media (max-width: 620px) {
+  .nav-links { gap: .9rem; }
+  /* esconde só o link secundário; sobre/projetos/stack/contato continuam lá */
+  .nav-links .opcional { display: none; }
+}
+
+/* ==========================================================================
+   14. MOVIMENTO REDUZIDO
+   Respeita quem pediu menos animação no sistema operacional.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* nada de conteúdo preso invisível quando a transição não roda */
+  .js .revelar { opacity: 1; transform: none; }
+  .barra i { transform: scaleX(1); }
+}
+</style>
+</head>
+
+<body>
+
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+<!-- ====================== BARRA FIXA ====================== -->
+<header class="topo">
+  <div class="envolve">
+    <a class="logo" href="#topo">Raul<span>.dev</span></a>
+
+    <nav aria-label="Navegação principal">
+      <ul class="nav-links">
+        <li><a href="#sobre">sobre</a></li>
+        <li><a href="#projetos">projetos</a></li>
+        <li><a href="#stack">stack</a></li>
+        <li class="opcional"><a href="#trajetoria">trajetória</a></li>
+        <li><a href="#contato">contato</a></li>
+      </ul>
+    </nav>
+
+    <button class="btn-tema" type="button" id="btn-tema" aria-label="Alternar entre tema claro e escuro">
+      <!-- lua: aparece no tema escuro -->
+      <svg class="icone-escuro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <!-- sol: aparece no tema claro -->
+      <svg class="icone-claro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- ====================== HERO ====================== -->
+  <section class="hero" id="topo">
+    <div class="envolve">
+      <p class="status">
+        <span class="ponto" aria-hidden="true"></span>
+        aberto a oportunidades júnior
+      </p>
+
+      <h1>Back-end, redes e segurança. Começo pelo que <em>quebra</em>.</h1>
+
+      <p class="sub">Raul Guilherme, 21 anos. Analista de helpdesk júnior na Supermídia e 4º semestre de ADS. O que me prende não é a tela: é o que acontece antes do erro aparecer nela.</p>
+
+      <div class="acoes">
+        <a class="btn btn-cheio" href="#projetos">ver projetos</a>
+        <a class="btn btn-contorno" href="#contato">falar comigo</a>
+      </div>
+
+      <div class="hero-links">
+        <a href="https://github.com/Guitts8" target="_blank" rel="noopener noreferrer">github ↗</a>
+        <a href="https://www.linkedin.com/in/raul-guilherme-rodrigues-da-silva-555aa02b4/" target="_blank" rel="noopener noreferrer">linkedin ↗</a>
+        <a href="mailto:contato.raulguilherme@gmail.com">e-mail ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== SOBRE ====================== -->
+  <section id="sobre">
+    <div class="envolve">
+      <p class="rotulo revelar">01 / sobre</p>
+      <h2 class="titulo-secao revelar">Suporte de dia. Back-end e segurança no resto do tempo.</h2>
+
+      <div class="sobre-texto revelar">
+        <p>Tenho 21 anos, estou no <strong>4º semestre de Análise e Desenvolvimento de Sistemas</strong> e trabalho como <strong>analista de helpdesk júnior na Supermídia</strong>. É um lugar bom para aprender: chamado real, log real, usuário real. Nada roda em ambiente controlado.</p>
+
+        <p>As duas perguntas que me trouxeram para cá são simples de fazer e difíceis de responder: <strong>o que exatamente leva uma conta de banco a ser clonada?</strong> E <strong>o que cada botão que você aperta faz por baixo?</strong> Uma virou interesse por segurança da informação, a outra por back-end. Na prática são a mesma pergunta vista de dois lados.</p>
+
+        <p>Estudo C#/.NET e APIs REST do lado do servidor, e do outro lado o que sustenta tudo: banco, Linux, rede, log. Gosto do que faço — de um jeito sóbrio, sem transformar em identidade. Continuo depois do expediente porque a pergunta ainda está aberta, não porque virei o trabalho.</p>
+      </div>
+
+      <!-- FALTA PREENCHER: quatro números reais. Como escolher: MELHORIAS.md, seção 1. -->
+      <div class="numeros revelar">
+        <div class="numero"><b>[N]</b><span>[chamados resolvidos]</span></div>
+        <div class="numero"><b>[N]</b><span>[projetos publicados]</span></div>
+        <div class="numero"><b>[N]</b><span>[anos programando]</span></div>
+        <div class="numero"><b>[N]</b><span>[legenda]</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== PROJETOS ====================== -->
+  <section id="projetos">
+    <div class="envolve">
+      <p class="rotulo revelar">02 / projetos</p>
+      <h2 class="titulo-secao revelar">Cada um resolve um problema que eu tive.</h2>
+
+      <!--
+        Os botões carregam data-filtro; os cartões carregam data-tag.
+        Para criar uma categoria nova, use a mesma string nos dois lugares.
+        Se um filtro ficar sem nenhum projeto, apague o botão dele.
+      -->
+      <div class="filtros" id="filtros" role="group" aria-label="Filtrar projetos por categoria">
+        <button class="filtro" type="button" data-filtro="todos" aria-pressed="true">todos</button>
+        <button class="filtro" type="button" data-filtro="api" aria-pressed="false">api</button>
+        <button class="filtro" type="button" data-filtro="web" aria-pressed="false">web</button>
+        <button class="filtro" type="button" data-filtro="ferramenta" aria-pressed="false">ferramenta</button>
+      </div>
+
+      <div class="grade-projetos" id="grade-projetos">
+
+        <!--
+          FALTA PREENCHER: os três cartões abaixo são estruturais.
+          Como escolher e descrever os projetos: MELHORIAS.md, seção 2.
+          Para um projeto novo, copie um <article> inteiro.
+        -->
+        <article class="projeto revelar" data-tag="api">
+          <p class="tag">api</p>
+          <h3>[NOME_DO_PROJETO_1]</h3>
+          <p>[O PROBLEMA que ele resolve — uma frase. Não a tecnologia.]</p>
+          <p class="stack">[C# · ASP.NET · PostgreSQL]</p>
+          <a class="repo" href="[URL_REPOSITORIO_1]" target="_blank" rel="noopener noreferrer">
+            repositório
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M17 7H8M17 7v9"/>
+            </svg>
+            <span class="so-leitor">de [NOME_DO_PROJETO_1] (abre em nova aba)</span>
+          </a>
+        </article>
+
+        <article class="projeto revelar" data-tag="web">
+          <p class="tag">web</p>
+          <h3>[NOME_DO_PROJETO_2]</h3>
+          <p>[O PROBLEMA que ele resolve.]</p>
+          <p class="stack">[TypeScript · React · Node.js]</p>
+          <a class="repo" href="[URL_REPOSITORIO_2]" target="_blank" rel="noopener noreferrer">
+            repositório
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M17 7H8M17 7v9"/>
+            </svg>
+            <span class="so-leitor">de [NOME_DO_PROJETO_2] (abre em nova aba)</span>
+          </a>
+        </article>
+
+        <article class="projeto revelar" data-tag="ferramenta">
+          <p class="tag">ferramenta</p>
+          <h3>[NOME_DO_PROJETO_3]</h3>
+          <p>[O PROBLEMA que ele resolve.]</p>
+          <p class="stack">[Python · Linux · CLI]</p>
+          <a class="repo" href="[URL_REPOSITORIO_3]" target="_blank" rel="noopener noreferrer">
+            repositório
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M17 7H8M17 7v9"/>
+            </svg>
+            <span class="so-leitor">de [NOME_DO_PROJETO_3] (abre em nova aba)</span>
+          </a>
+        </article>
+
+      </div>
+
+      <!-- avisa por texto quando o filtro não devolve nada -->
+      <p class="vazio" id="vazio" role="status" hidden>nenhum projeto nessa categoria.</p>
+    </div>
+  </section>
+
+  <!-- ====================== STACK ====================== -->
+  <section id="stack">
+    <div class="envolve">
+      <p class="rotulo revelar">03 / stack</p>
+      <h2 class="titulo-secao revelar">Onde eu estou em cada coisa.</h2>
+
+      <p class="nota-escala revelar">Autoavaliação, com a régua explícita: 60 = resolvo sozinho consultando a documentação. 80 = resolvo sozinho e explico para outra pessoa.</p>
+
+      <!-- O número está no texto (lido por leitor de tela); a barra é só visual. -->
+
+      <div class="grupo revelar">
+        <h3 class="grupo-titulo">back-end</h3>
+        <div class="niveis">
+          <div class="nivel">
+            <div class="nivel-topo"><span>ASP.NET Web API / REST</span><span class="valor">70</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 70%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>C# / .NET</span><span class="valor">65</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Node.js</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Java</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Python</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Spring Boot</span><span class="valor">45</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 45%"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grupo revelar">
+        <h3 class="grupo-titulo">dados</h3>
+        <div class="niveis">
+          <div class="nivel">
+            <div class="nivel-topo"><span>SQL / PostgreSQL</span><span class="valor">75</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 75%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>SQL Server</span><span class="valor">65</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grupo revelar">
+        <h3 class="grupo-titulo">front-end</h3>
+        <div class="niveis">
+          <div class="nivel">
+            <div class="nivel-topo"><span>HTML / CSS</span><span class="valor">65</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>JavaScript / TypeScript</span><span class="valor">60</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 60%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>React / Next.js</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grupo revelar">
+        <h3 class="grupo-titulo">infra e redes</h3>
+        <div class="niveis">
+          <div class="nivel">
+            <div class="nivel-topo"><span>Git / GitHub</span><span class="valor">65</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Linux</span><span class="valor">60</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 60%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Redes / TCP-IP / DNS</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Docker</span><span class="valor">45</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 45%"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grupo revelar">
+        <h3 class="grupo-titulo">operação e segurança</h3>
+        <div class="niveis">
+          <div class="nivel">
+            <div class="nivel-topo"><span>Suporte / troubleshooting</span><span class="valor">80</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 80%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Documentação técnica</span><span class="valor">75</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 75%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Testes de API</span><span class="valor">70</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 70%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Segurança da informação</span><span class="valor">65</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span>Análise de logs</span><span class="valor">60</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 60%"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grupo revelar">
+        <h3 class="grupo-titulo">no dia a dia</h3>
+        <div class="chips">
+          <span class="chip">Visual Studio</span>
+          <span class="chip">VS Code</span>
+          <span class="chip">GitHub</span>
+          <span class="chip">Git Bash</span>
+          <span class="chip">Insomnia</span>
+          <span class="chip">Movidesk</span>
+          <span class="chip">PostgreSQL</span>
+          <span class="chip">pgAdmin</span>
+          <span class="chip">SQL Server</span>
+          <span class="chip">SSMS</span>
+          <span class="chip">Linux</span>
+          <span class="chip">PowerShell</span>
+          <span class="chip">CMD</span>
+          <span class="chip">Docker</span>
+          <span class="chip">DevTools</span>
+          <span class="chip">AnyDesk</span>
+          <span class="chip">RustDesk</span>
+          <span class="chip">Excel</span>
+        </div>
+      </div>
+
+      <div class="grupo revelar">
+        <h3 class="grupo-titulo">já usei em projeto ou estudo</h3>
+        <div class="chips">
+          <span class="chip">Entity Framework</span>
+          <span class="chip">Spring Boot</span>
+          <span class="chip">JPA / Hibernate</span>
+          <span class="chip">Maven</span>
+          <span class="chip">Gradle</span>
+          <span class="chip">Next.js</span>
+          <span class="chip">React</span>
+          <span class="chip">Tailwind CSS</span>
+          <span class="chip">PHP</span>
+          <span class="chip">CodeIgniter</span>
+          <span class="chip">MySQL</span>
+          <span class="chip">JWT</span>
+          <span class="chip">testes unitários</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== TRAJETÓRIA ====================== -->
+  <section id="trajetoria">
+    <div class="envolve">
+      <p class="rotulo revelar">04 / trajetória</p>
+      <h2 class="titulo-secao revelar">Como eu cheguei até aqui.</h2>
+
+      <ol class="linha-tempo">
+        <li class="marco revelar">
+          <p class="ano">2026 — agora</p>
+          <h3>Helpdesk júnior na Supermídia</h3>
+          <p>Atendo chamado real, leio log real e documento o que resolvi. É o primeiro lugar onde a pergunta sobre segurança deixou de ser teórica: agora ela vale para dado de gente que eu conheço.</p>
+        </li>
+        <li class="marco revelar">
+          <p class="ano">2025</p>
+          <h3>Segurança virou o foco</h3>
+          <p>Parei de tratar segurança como assunto paralelo e comecei a estudar como um dado vaza de verdade — engenharia social, credencial reaproveitada, log que ninguém leu. A partir dali passou a ser o critério de tudo que eu construo.</p>
+        </li>
+        <li class="marco revelar">
+          <p class="ano">2024</p>
+          <h3>Entrei em ADS</h3>
+          <p>Programar já tinha ficado sério, mas ficou claro que código sozinho não me bastava. Queria a stack inteira: banco, servidor, rede e a aplicação em cima.</p>
+        </li>
+        <li class="marco revelar">
+          <p class="ano">2023</p>
+          <h3>Parei de tratar como hobby</h3>
+          <p>Decidi que a resposta era o que eu já fazia por conta: mexer em máquina e entender por que parou de funcionar. Mudou o método, não o assunto — virou estudo com hora marcada.</p>
+        </li>
+        <li class="marco revelar">
+          <p class="ano">2022</p>
+          <h3>Fim do ensino médio</h3>
+          <p>Terminei com a pergunta em aberto: e agora? Não tinha resposta pronta e levei um tempo para achar uma que se sustentasse.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ====================== CONTATO ====================== -->
+  <section id="contato">
+    <div class="envolve">
+      <p class="rotulo revelar">05 / contato</p>
+      <h2 class="titulo-secao revelar">Onde me achar.</h2>
+
+      <div class="contato-grade">
+
+        <div class="revelar">
+          <p class="contato-intro">Procuro vaga júnior em back-end, infraestrutura ou segurança. Se for sobre isso, sobre um projeto ou só uma dúvida técnica, pode mandar. Respondo em até um dia útil.</p>
+
+          <ul class="lista-contato">
+            <li>
+              <a href="mailto:contato.raulguilherme@gmail.com">
+                <span class="chave">e-mail</span>
+                <span class="valor-contato">contato.raulguilherme@gmail.com</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://github.com/Guitts8" target="_blank" rel="noopener noreferrer">
+                <span class="chave">github</span>
+                <span class="valor-contato">@Guitts8 ↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://www.linkedin.com/in/raul-guilherme-rodrigues-da-silva-555aa02b4/" target="_blank" rel="noopener noreferrer">
+                <span class="chave">linkedin</span>
+                <span class="valor-contato">raul-guilherme ↗</span>
+              </a>
+            </li>
+
+            <!--
+              CURRÍCULO EM PDF — descomente quando tiver o link do Drive.
+              No Drive: botão direito no arquivo > Compartilhar > "Qualquer pessoa
+              com o link" > Leitor. Só então cole a URL aqui.
+            <li>
+              <a href="[URL_CURRICULO_PDF]" target="_blank" rel="noopener noreferrer">
+                <span class="chave">currículo</span>
+                <span class="valor-contato">PDF ↗</span>
+              </a>
+            </li>
+            -->
+          </ul>
+        </div>
+
+        <!--
+          FORMSPREE — onde pegar o ID
+          1. Crie uma conta grátis em https://formspree.io
+          2. New Form → escolha o e-mail que vai receber as mensagens
+          3. Ele mostra um endpoint tipo https://formspree.io/f/xayzbwqd
+          4. Troque SEU_ID_AQUI abaixo pela parte final (xayzbwqd)
+          O plano grátis aceita 50 envios por mês.
+        -->
+        <form class="revelar" action="https://formspree.io/f/SEU_ID_AQUI" method="POST">
+
+          <div class="form-campo">
+            <label for="campo-nome">nome</label>
+            <input type="text" id="campo-nome" name="nome" required autocomplete="name" placeholder="como te chamo">
+          </div>
+
+          <div class="form-campo">
+            <label for="campo-email">e-mail</label>
+            <input type="email" id="campo-email" name="email" required autocomplete="email" placeholder="para onde eu respondo">
+          </div>
+
+          <div class="form-campo">
+            <label for="campo-msg">mensagem</label>
+            <textarea id="campo-msg" name="mensagem" required placeholder="manda o contexto"></textarea>
+          </div>
+
+          <!-- o Formspree descarta o envio se este campo vier preenchido -->
+          <div class="armadilha" aria-hidden="true">
+            <label for="campo-gotcha">não preencha este campo</label>
+            <input type="text" id="campo-gotcha" name="_gotcha" tabindex="-1" autocomplete="off">
+          </div>
+
+          <button class="btn btn-cheio" type="submit">enviar mensagem</button>
+          <p class="form-nota">respondo em até um dia útil.</p>
+        </form>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ====================== RODAPÉ ====================== -->
+<footer class="rodape">
+  <div class="envolve">
+    <p>© <span id="ano">2026</span> Raul Guilherme Rodrigues da Silva</p>
+    <p><a href="https://github.com/Guitts8/Guitts8.github.io" target="_blank" rel="noopener noreferrer">código deste site ↗</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------
+     TEMA
+     O tema inicial já foi aplicado no <head>. Aqui só o botão.
+     --------------------------------------------------------------- */
+  var btnTema = document.getElementById('btn-tema');
+
+  btnTema.addEventListener('click', function () {
+    var atual = document.documentElement.getAttribute('data-theme');
+    var novo = atual === 'light' ? 'dark' : 'light';
+
+    document.documentElement.setAttribute('data-theme', novo);
+
+    try {
+      localStorage.setItem('tema', novo);
+    } catch (e) {
+      /* sem localStorage a troca funciona, só não sobrevive ao reload */
+    }
+  });
+
+  /* ---------------------------------------------------------------
+     FILTRO DE PROJETOS
+     Um listener no container (delegação). O estado ativo é aria-pressed.
+     --------------------------------------------------------------- */
+  var filtros = document.getElementById('filtros');
+  var grade = document.getElementById('grade-projetos');
+  var vazio = document.getElementById('vazio');
+
+  filtros.addEventListener('click', function (evento) {
+    var botao = evento.target.closest('.filtro');
+    if (!botao || !filtros.contains(botao)) return;
+
+    var alvo = botao.dataset.filtro;
+
+    // um único botão marcado por vez
+    filtros.querySelectorAll('.filtro').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b === botao));
+    });
+
+    var visiveis = 0;
+
+    grade.querySelectorAll('.projeto').forEach(function (cartao) {
+      var mostra = alvo === 'todos' || cartao.dataset.tag === alvo;
+      // hidden tira do fluxo E da tabulação — o link interno some junto
+      cartao.hidden = !mostra;
+      if (mostra) visiveis++;
+    });
+
+    vazio.hidden = visiveis > 0;
+  });
+
+  /* ---------------------------------------------------------------
+     REVELAÇÃO AO ROLAR
+     IntersectionObserver, sem listener de scroll.
+     --------------------------------------------------------------- */
+  var alvos = document.querySelectorAll('.revelar');
+
+  if ('IntersectionObserver' in window) {
+    var observador = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (entrada) {
+        if (!entrada.isIntersecting) return;
+        entrada.target.classList.add('revelado');
+        observador.unobserve(entrada.target); // revela uma vez só
+      });
+    }, {
+      threshold: 0.12,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    alvos.forEach(function (alvo) { observador.observe(alvo); });
+  } else {
+    // navegador antigo: mostra tudo de uma vez
+    alvos.forEach(function (alvo) { alvo.classList.add('revelado'); });
+  }
+
+  /* ---------------------------------------------------------------
+     ANO DO RODAPÉ
+     --------------------------------------------------------------- */
+  document.getElementById('ano').textContent = new Date().getFullYear();
+})();
+</script>
+
+</body>
+</html>
