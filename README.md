@@ -83,7 +83,58 @@ Os desenhos vieram do [Simple Icons](https://simpleicons.org) (24×24). C# e SQL
 
 Sete marcos, do mais recente para o mais antigo, misturando trabalho e formação. Os três primeiros são os cargos na Supermídia.
 
-Cada marco é um `<li class="marco">` com ano, título e um parágrafo de 2 a 3 frases. O primeiro leva também a classe `agora`, que é o que deixa o ponto da linha do tempo preenchido em vez de vazado.
+Os marcos são em primeira pessoa, igual ao resto da página ("instalo", "parei", "entrei"). Ao acrescentar um, siga a mesma voz.
+
+**O título é "Trajetória profissional."**, e não "Como eu cheguei até aqui" como era antes: um título que promete começar do começo, numa lista que começa pelo cargo de hoje, briga com a própria seção. O título nomeia a seção e para por aí; o subtítulo diz o que a trajetória significa (três cargos no mesmo sentido), e não como lê-la. ⚠️ **A seção não se explica em voz alta** — quem mostra que a ordem é do presente para o passado é o desenho: o cartão aceso no topo, o trilho apagando para baixo e as datas em ordem decrescente. Se você sentir vontade de escrever a regra de leitura no subtítulo, o desenho é que está fraco.
+
+Cada marco é um `<li class="marco" data-tipo="…">` com um `.marco-caixa` dentro. Dois atributos governam a aparência:
+
+- **`data-tipo`** vale `cargo`, `virada` ou `formação`. Aparece como etiqueta no `.marco-topo` e, no CSS, só o `cargo` ganha o anel de acento no ponto do trilho — o resto fica em tom de divisória. É o que deixa a lista ser lida na diagonal: dá para achar só os cargos sem ler um parágrafo. Se inventar um quarto tipo, decida no CSS o que ele faz com o ponto.
+- **`class="agora"`** no primeiro. É o único marco que vira cartão de verdade — fundo, borda de acento, ponto cheio e o selo "atual" com o pontinho pulsando. Sem esse desnível a lista inteira lê no mesmo peso, e a ordem invertida vira só uma lista de datas.
+
+**O `.marco-caixa` existe para o hover.** O `<li>` não pode receber o fundo direto: ele carrega o `padding-left` que afasta o texto do trilho, e o fundo pintaria por cima do trilho. A borda do cartão nasce `transparent` em vez de ausente — se ela só aparecesse no hover, o cartão cresceria 2px e o texto pularia de linha debaixo do mouse.
+
+**O trilho é um elemento só** (`.linha-tempo::before`), do topo ao fim da lista, e não uma borda por item. Duas razões: não quebra no vão entre os marcos e, principalmente, pode ser um **gradiente**. É o gradiente que carrega a ideia do título — aceso no agora, apagando conforme desce para o passado. O `top: 1.15rem` é o mesmo do primeiro ponto: o trilho nasce dentro dele, nunca acima.
+
+**A seção é de duas colunas**, igual à 04: os marcos à esquerda, o radar grudado à direita. Quem governa a largura é a coluna, e a medida do texto continua controlada pelo `max-width: 62ch` do `.marco p`.
+
+**A divisão `1.12fr / .88fr` não é chute.** A coluna da esquerda precisa caber os 62ch do `.marco p` (uns 575px) mais o recuo do trilho e o padding do cartão — uns 620px dos 1200 disponíveis. Apertar mais que isso estreita a medida do texto, que é a única coisa da seção que não é negociável. O resto foi para a direita, e o `gap` encolheu junto (de `6vw` para `4.5vw`): era ele que empurrava o desenho para longe do texto.
+
+⚠️ Mesma armadilha da 04: **o `.revelar` fica nas colunas, nunca no `.traj-duas`**. A animação de revelar usa `transform`, e um ancestral com `transform` vira o bloco de contenção do `position: sticky` — o radar para de grudar.
+
+#### O radar de topologia
+
+SVG inline no lugar do antigo mapa em árvore. É decoração temática e está assumido como tal: `aria-hidden`, nenhum dado ali que o texto ao lado já não diga. Existe para ocupar o vão e para dizer, sem escrever, de que assunto a seção trata.
+
+**A geometria.** Centro em `(180,180)`, `viewBox` quadrado `0 0 360 360`. Três eixos a 0°, 120° e 240°, com um nó no anel de fora (r=150) e um no de dentro (r=90), mais o núcleo. A leitura é de fora para dentro — o que o cliente encosta a mão fica na borda, o dado fica no meio:
+
+| eixo | nó externo | nó interno |
+|---|---|---|
+| 0° | `(180,30)` cliente | `(180,90)` rede |
+| 120° | `(310,255)` integração | `(258,225)` serviço |
+| 240° | `(50,255)` dispositivo | `(102,225)` firewall |
+
+⚠️ **O desenho tem que ficar centrado no `viewBox`.** É isso que deixa o `transform-origin` da varredura ser simplesmente `180px 180px`. Se mudar o `viewBox`, acerte o `transform-origin` de `.radar-varredura` junto, ou a cunha passa a girar torta.
+
+Cinco coisas valem atenção:
+
+- **Cada ligação aparece duas vezes com o mesmo `d`** — uma como traço parado (`.radar-link`) e outra como pacote (`.radar-fluxo`). Se mexer numa coordenada, mexa nas duas: elas andam em par. São nove.
+- **O `pathLength="100"`** normaliza toda ligação para 100 unidades, independentemente do comprimento real. É o que deixa um único `stroke-dasharray` no CSS servir para as nove de uma vez. O pacote é um traço curto correndo por `stroke-dashoffset`, e não um círculo com `offset-path`, justamente para não duplicar as coordenadas em mais um lugar.
+- **`transform-box: fill-box` + `transform-origin: center`** nos halos e no ping. Sem os dois, o `scale` gira em torno do `(0,0)` do viewBox e o anel sai voando para o canto — em SVG a origem do transform não é o centro do desenho. Na varredura é `transform-box: view-box`, que é outro caso: ali o que se quer é justamente o centro do viewBox, não o da cunha.
+- **O gradiente da varredura é `gradientUnits="userSpaceOnUse"`.** No padrão (`objectBoundingBox`) o `cx/cy` de 50% cai no centro da *caixa da cunha*, que fica lá pelo meio do raio, e o brilho vira um borrão solto no meio do nada. E as paradas são pintadas por CSS (`.varre-*`), não por atributo: `var(--accent)` não vale em atributo de apresentação, e a regra da casa é cor nenhuma fora do `:root`.
+- **A agulha fica na borda de 70°, não na de 0°.** A cunha vai de 0° a 70° e gira no sentido horário — quem vai na frente é o lado de 70°.
+
+**Os halos não pulsam em ritmo próprio: eles acendem quando a agulha passa.** O `--atraso` de cada nó é o ângulo dele convertido em tempo — `((ângulo − 70 + 360) % 360) / 360 × 9s`, onde 70 é onde a agulha começa e 9s é a volta inteira. Daí os `7.25s` (eixo 0°), `1.25s` (120°) e `4.25s` (240°) no HTML. ⚠️ **Se mudar a duração do giro, os três atrasos mudam junto.**
+
+Já os `--atraso` dos pacotes não são múltiplos redondos de propósito: em passo regular as nove linhas pulsam em bloco e o desenho vira metrônomo. Mesma lógica dos tempos primos das `.formas`.
+
+**Os rótulos são a parte apertada.** Sobram 30 unidades entre o anel de fora e a borda do `viewBox`, e é lá que eles vivem, junto das marcas de bordo. Os dois pares de baixo caem quase na mesma vertical, então os de dentro são puxados para dentro (`244` e `116`, e não `258` e `102`) e os de fora descem até `y=290`. ⚠️ Ao trocar qualquer palavra, **confira sobreposição** — não há folga para uma palavra mais longa.
+
+**O sticky prende uma caixa da altura da janela, não o desenho.** O `.traj-radar` é `height: calc(100vh - var(--alt-nav))` com `display: flex` e `align-items: center`; o SVG fica centralizado dentro dela. Sem isso o desenho gruda colado embaixo da barra e sobra tela vazia debaixo dele enquanto você rola. Funciona porque o `.traj-duas` é muito mais alto que a janela — se a seção encolher para menos de uma tela, não há percurso para grudar e o efeito some.
+
+O `max-height` no `.radar` é a trava para tela baixa: sem ela o desenho estoura a janela de um notebook e o topo sai cortado, justamente por estar centralizado em vez de ancorado no topo.
+
+Abaixo de 900px o radar **sai inteiro** (`display: none`), em vez de descer para baixo dos marcos. Em celular ele custaria uma tela de rolagem para não dizer nada que o texto já não diga. Em movimento reduzido acontece o meio-termo: o desenho e a cunha ficam — cunha parada é forma, não movimento —, e somem os pacotes, o ping e o pulso do selo.
 
 ---
 
@@ -211,6 +262,8 @@ Duas coisas nele valem atenção. A cor **não está no CSS**: o JS lê o token 
 
 Pausa sozinho quando a aba sai de foco (`visibilitychange`), para não queimar bateria desenhando o que ninguém vê.
 
+**Radar de topologia (seção 05).** SVG inline na coluna direita da trajetória: três anéis, três eixos, sete nós e uma varredura girando. Detalhado em ["Trajetória (seção 05)"](#trajetória-seção-05), na seção 2.
+
 **Trama e brilho.** Duas camadas `position: fixed` com `z-index` negativo. A trama é uma grade de pontos feita com `radial-gradient` repetido, mascarada por um gradiente para sumir na direção do rodapé. O brilho são dois `radial-gradient` grandes atrás do hero.
 
 **Faixas alternadas.** As seções com a classe `.faixa` usam `--bg-alt` e ganham uma linha degradê no topo e na base, para a página não ser um bloco só de preto.
@@ -312,7 +365,7 @@ Nada disso roda com movimento reduzido: `atrasar()` sai antes de escrever qualqu
 
 **Sticky e a animação de revelar.** Na seção 04 o `.revelar` está nas duas colunas, e não no `.stack-duas` que as envolve. Não é estilo: a animação usa `transform`, e um ancestral com `transform` vira o bloco de contenção do `position: sticky`. Se você mover o `.revelar` para o container, a grade de logos para de grudar.
 
-**Responsividade.** Quatro media queries de layout. Em 940px o hero vira uma coluna só (e a arte sobe para cima do texto, via `order: -1`); em 900px a stack deixa de ser duas colunas e os logos descem para baixo das barras, com o sticky desligado; em 620px somem o selo de vaga e os links secundários da nav; em 400px a grade de logos aperta o espaçamento. Todo o resto se adapta por `clamp()` nos tamanhos e `repeat(auto-fill, minmax(...))` nas grades.
+**Responsividade.** Quatro media queries de layout. Em 940px o hero vira uma coluna só (e a arte sobe para cima do texto, via `order: -1`); em 900px acontecem duas coisas — a stack deixa de ser duas colunas e os logos descem para baixo das barras com o sticky desligado, e a trajetória também vira uma coluna, com o radar saindo de cena; em 620px somem o selo de vaga e os links secundários da nav; em 400px a grade de logos aperta o espaçamento. Todo o resto se adapta por `clamp()` nos tamanhos e `repeat(auto-fill, minmax(...))` nas grades.
 
 **Movimento reduzido.** A última media query zera animação, transição e rolagem suave para quem pediu menos movimento no sistema. Nesse modo o terminal aparece inteiro de uma vez, as barras já nascem preenchidas e os números vão direto ao valor final — nada fica preso invisível.
 

@@ -1389,47 +1389,351 @@ section {
    11. TRAJETÓRIA
    ========================================================================== */
 
+/* Duas colunas, igual à seção 04: os marcos à esquerda, o radar grudado à
+   direita. Mesma armadilha de lá — o .revelar tem que ficar NAS colunas e
+   nunca neste container. A animação de revelar usa transform, e um
+   ancestral com transform vira o bloco de contenção do position:sticky:
+   o radar pararia de grudar. */
+/* A divisão não é arbitrária: a coluna da esquerda precisa caber os 62ch
+   do .marco p (~575px) mais o recuo da linha do tempo e o padding do
+   cartão, ou seja uns 620px dos 1200 disponíveis. Apertar mais que isso
+   estreita a medida do texto, que é a única coisa aqui que não é
+   negociável. O que sobrou foi para a direita, e o gap encolheu junto —
+   era ele que empurrava o desenho para longe do texto. */
+.traj-duas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr);
+  gap: clamp(2rem, 4.5vw, 3.5rem);
+  align-items: start;
+}
+
+/* ---- a linha do tempo -------------------------------------------------
+   Lê de cima para baixo indo do presente para o passado, e o desenho
+   precisa dizer isso sozinho: o marco de hoje é o único com cartão, selo e
+   ponto cheio, e o trilho vai apagando conforme desce. Ver .linha-tempo::before. */
 .linha-tempo {
+  position: relative;
   list-style: none;
   padding: 0;
   display: grid;
-  gap: clamp(1.75rem, 4vw, 2.5rem);
-  max-width: 760px;
+  gap: clamp(.6rem, 1.8vw, 1rem);
 }
 
+/* O trilho é UM elemento, do topo ao fim da lista — não uma borda por item.
+   Duas razões: não quebra no vão entre os marcos e, principalmente, pode ser
+   um gradiente. É o gradiente que carrega a ideia do título: em cima, no
+   agora, ele está aceso; descendo para o passado, apaga. O top de 1.15rem
+   é o mesmo do primeiro ponto: o trilho nasce dentro dele, nunca acima. */
+.linha-tempo::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.15rem;
+  bottom: .5rem;
+  width: 1px;
+  background: linear-gradient(180deg,
+    var(--accent) 0,
+    color-mix(in srgb, var(--accent) 40%, var(--line)) 14%,
+    var(--line) 45%,
+    color-mix(in srgb, var(--line) 50%, transparent) 100%);
+}
+
+/* ---- o radar ----------------------------------------------------------
+   Decoração temática, e assumida como tal: aria-hidden, sem texto que o
+   leitor de tela precise ouvir. Existe para tapar o vão à direita dos
+   marcos e para dizer, sem escrever, de que assunto a seção trata.
+
+   O desenho é um radar de topologia: três anéis concêntricos, três eixos a
+   120° e 7 nós que vão de fora (o que o cliente toca) para dentro (o dado).
+   Uma varredura gira por cima e cada nó acende quando ela passa por ele —
+   o atraso de cada um é o ângulo dele convertido em tempo, ver .radar-halo. */
+
+/* O sticky prende uma caixa da ALTURA DA JANELA, não o desenho direto, e
+   o desenho fica centralizado dentro dela. Sem isso o radar gruda colado
+   embaixo da barra e o resto da tela fica vazio debaixo dele.
+   A caixa tem altura fixa mas o pai (.traj-duas) é muito mais alto que a
+   janela, senão não haveria percurso para grudar. */
+.traj-radar {
+  position: sticky;
+  top: var(--alt-nav);
+  height: calc(100vh - var(--alt-nav));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 430px;
+  /* trava para tela baixa: sem ela o desenho estoura a janela e o topo
+     sai cortado justamente por estar centralizado */
+  max-height: calc(100vh - var(--alt-nav) - 3rem);
+  overflow: visible;   /* o halo dos nós passa da caixa do viewBox */
+}
+
+/* O disco é o corpo do radar: um véu de acento tão fraco que não se lê como
+   cor, só tira o desenho de cima do fundo chapado. */
+.radar-disco { fill: color-mix(in srgb, var(--accent) 4%, transparent); }
+
+.radar-aneis circle {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+/* o anel do meio é tracejado só para os três não lerem como o mesmo traço
+   repetido três vezes — é o que dá textura de instrumento ao desenho */
+.radar-aneis .anel-tracejado {
+  stroke-dasharray: 2 7;
+  stroke: color-mix(in srgb, var(--line) 75%, transparent);
+}
+
+/* as marcas de bordo, a 60°, 180° e 300°: ficam nos vãos ENTRE os eixos,
+   senão cairiam em cima dos nós externos */
+.radar-marcas line {
+  stroke: color-mix(in srgb, var(--muted) 45%, transparent);
+  stroke-width: 1;
+}
+
+/* ---- a varredura ----
+   Uma cunha de 70° saindo do centro, girando devagar. O gradiente é radial
+   (acende perto do centro e some na borda): é assim que radar de verdade
+   desenha, e evita ter que fatiar a cunha em várias formas para simular
+   rastro angular. A agulha é a borda DIANTEIRA da cunha — girando no
+   sentido horário, quem vai na frente é o lado de 70°, não o de 0°. */
+.radar-cunha  { fill: url(#radar-varredura); }
+.radar-agulha {
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  opacity: .55;
+}
+/* O brilho não é maior no vértice: ele engrossa no meio do raio e cai nas
+   duas pontas. Com o pico no vértice, a cunha vira um borrão em cima do
+   núcleo — que já é a parte mais acesa do desenho — e a forma some. */
+.varre-perto { stop-color: var(--accent); stop-opacity: .07; }
+.varre-meio  { stop-color: var(--accent); stop-opacity: .22; }
+.varre-longe { stop-color: var(--accent); stop-opacity: 0; }
+
+/* O view-box aqui é obrigatório: sem ele a origem do transform é a caixa do
+   próprio desenho, e a cunha giraria em torno do centro dela — não do
+   centro do radar. Com view-box, o 180px 180px é o centro do viewBox. */
+.radar-varredura {
+  transform-box: view-box;
+  transform-origin: 180px 180px;
+  animation: radar-gira 9s linear infinite;
+}
+@keyframes radar-gira {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* a ligação parada: só o traço, na mesma cor de divisória do resto */
+.radar-link {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+/* O pacote. É um traço curto correndo pela MESMA linha, feito com
+   dasharray em vez de um círculo com offset-path — assim ele acompanha a
+   linha de graça, sem duplicar as coordenadas em outro lugar.
+   O pathLength="100" no SVG é o que faz isto funcionar: ele normaliza
+   toda ligação para 100 unidades, independentemente do comprimento real,
+   então um único par de números serve para as nove. */
+.radar-fluxo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 10 100;   /* traço de 10, vão de 100: nunca repete */
+  animation: radar-anda 4.2s linear infinite;
+  animation-delay: var(--atraso, 0s);
+}
+/* de 10 a -100 leva o traço de antes do início até depois do fim */
+@keyframes radar-anda {
+  from { stroke-dashoffset: 10; }
+  to   { stroke-dashoffset: -100; }
+}
+
+/* o nó: mesmo desenho do ponto da linha do tempo, de propósito — furo no
+   fundo com anel de acento. As duas metades da seção falam a mesma língua */
+.radar-ponto {
+  fill: var(--bg);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+/* os nós do anel de fora são os mais distantes do dado: anel mais apagado */
+.radar-ponto.borda { stroke: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+
+/* O halo não pulsa em ritmo próprio: ele ACENDE quando a agulha passa por
+   cima. Como a varredura é linear e dá uma volta em 9s, o atraso de cada nó
+   é o ângulo dele virado em tempo — ((ângulo - 70 + 360) % 360) / 360 * 9s,
+   onde 70 é onde a agulha começa. Daí os 7.25s / 1.25s / 4.25s do HTML.
+   ⚠️ Se mudar a duração do giro, os três atrasos mudam junto. */
+.radar-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  /* sem estes dois o scale gira em torno da origem do viewBox e o halo
+     sai voando para o canto: em SVG a origem do transform não é o centro
+     do desenho, é o (0,0) do sistema de coordenadas */
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: .12;
+  animation: radar-acende 9s ease-out infinite;
+  animation-delay: var(--atraso, 0s);
+}
+@keyframes radar-acende {
+  0%        { opacity: .55; transform: scale(1.3); }
+  22%, 100% { opacity: .12; transform: scale(1); }
+}
+
+/* o ping do centro: um anel que abre e some. É o único movimento que não
+   depende da varredura — o dado no meio está sempre sendo pedido */
+.radar-ping {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: radar-ping 4.5s ease-out infinite;
+}
+@keyframes radar-ping {
+  0%        { opacity: .5; transform: scale(.4); }
+  70%, 100% { opacity: 0;  transform: scale(3.4); }
+}
+
+.radar-rotulos text {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  fill: var(--muted);
+  letter-spacing: .1em;
+}
+.radar-rotulos .rotulo-nucleo { fill: var(--accent); }
+
+/* Abaixo de 900px o radar sai inteiro, e não vai para baixo dos marcos.
+   Ele é decoração: em celular custaria uma tela de rolagem para não dizer
+   nada que o texto já não diga. O mesmo corte da seção 04. */
+@media (max-width: 900px) {
+  .traj-duas { grid-template-columns: 1fr; }
+  .traj-radar { display: none; }
+}
+
+/* ---- os marcos --------------------------------------------------------
+   O recuo do <li> vai só até a borda do cartão; o resto do afastamento em
+   relação ao trilho é o padding do .marco-caixa. Somados, dão os mesmos
+   ~2.75rem de texto recuado de antes — a diferença é que agora existe uma
+   caixa para pintar no hover sem empurrar nada de lugar. */
 .marco {
   position: relative;
-  padding-left: clamp(1.75rem, 5vw, 2.75rem);
-  padding-bottom: .25rem;
-  border-left: 1px solid var(--line);
+  padding-left: clamp(.6rem, 3.2vw, 1.6rem);
 }
-/* o ponto sobre a linha vertical */
+
+/* o ponto sobre o trilho */
 .marco::before {
   content: "";
   position: absolute;
   left: 0;
-  top: .5rem;
-  width: 10px; height: 10px;
+  top: 1.15rem;
+  width: 11px; height: 11px;
   border-radius: 50%;
   background: var(--bg);
-  border: 2px solid var(--accent);
+  border: 2px solid color-mix(in srgb, var(--muted) 65%, transparent);
   transform: translateX(-5.5px);
-  transition: box-shadow .3s ease;
+  transition: box-shadow .3s ease, background-color .3s ease, border-color .3s ease;
+  z-index: 1;   /* o trilho passa por baixo, não por dentro do furo */
 }
+/* cargo é o que muda de patamar: só esses três ganham o anel de acento.
+   O resto da linha do tempo é contexto, e fica em tom de divisória. */
+.marco[data-tipo="cargo"]::before { border-color: var(--accent); }
 .marco.revelado::before {
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
 }
-/* o marco atual ganha o ponto cheio */
-.marco.agora::before { background: var(--accent); }
+/* o marco de hoje ganha o ponto cheio */
+.marco.agora::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.marco:hover::before { background: var(--accent); }
 
-.marco .ano {
+/* A borda nasce transparente, e não ausente: se ela aparecesse só no hover,
+   o cartão cresceria 2px e o texto pularia de linha embaixo do mouse. */
+.marco-caixa {
+  padding: .85rem 1.1rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--raio);
+  transition: background-color .25s ease, border-color .25s ease;
+}
+.marco:hover .marco-caixa {
+  background: color-mix(in srgb, var(--surface) 65%, transparent);
+  border-color: color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+/* O marco de hoje é o topo da lista e o ponto mais importante dela: é o
+   único que vem como cartão de verdade, aceso e com selo. Sem isso a lista
+   inteira lê no mesmo peso e a ordem invertida vira só uma lista de datas. */
+.marco.agora .marco-caixa {
+  background:
+    linear-gradient(158deg, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%),
+    color-mix(in srgb, var(--surface) 75%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 26%, transparent);
+}
+
+.marco-topo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem .7rem;
+  margin-bottom: .55rem;
+}
+
+.marco-ano {
   font-family: var(--f-mono);
   font-size: var(--t-min);
   color: var(--accent);
   letter-spacing: .12em;
   text-transform: uppercase;
-  margin-bottom: .45rem;
 }
+
+/* a etiqueta do tipo: cargo, virada ou formação. Serve para a lista poder
+   ser lida na diagonal — dá para achar só os cargos sem ler os parágrafos */
+.marco-tipo {
+  font-family: var(--f-mono);
+  font-size: var(--t-min);
+  color: var(--muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .1rem .5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  line-height: 1.6;
+}
+
+.marco-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  margin-left: auto;   /* encosta na direita do cartão, longe do ano */
+  font-family: var(--f-mono);
+  font-size: var(--t-min);
+  color: var(--accent);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.marco-selo::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: selo-vivo 2.4s ease-in-out infinite;
+}
+@keyframes selo-vivo {
+  0%, 100% { opacity: 1;  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent); }
+  55%      { opacity: .5; box-shadow: 0 0 0 5px transparent; }
+}
+
 .marco h3 {
   font-family: var(--f-sans);
   font-size: var(--t-card);
@@ -1437,6 +1741,21 @@ section {
   letter-spacing: -.01em;
   margin-bottom: .45rem;
 }
+/* o empregador não é parte do cargo: entra em mono e em tom de apoio, para
+   o olho pegar o cargo primeiro */
+.marco-onde {
+  font-family: var(--f-mono);
+  font-size: var(--t-peq);
+  font-weight: 400;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.marco-onde::before {
+  content: "·";
+  margin: 0 .5rem 0 .35rem;
+  color: var(--line);
+}
+
 .marco p {
   color: var(--muted);
   font-size: var(--t-peq);
@@ -2083,6 +2402,12 @@ html.js .boot.boot-pulado {
   .particulas { display: none; }
   .ondulacao { display: none; }
   .terminal::after { display: none; }          /* a varredura do CRT */
+  /* o radar da 05 fica, parado: o desenho é o conteúdo, o movimento não.
+     A cunha da varredura continua desenhada — ela é forma, e congelada no
+     lugar em que nasce lê como um setor marcado, não como algo travado. */
+  .radar-fluxo, .radar-ping { display: none; }   /* pacotes e ping */
+  .radar-halo { opacity: .18; animation: none; }
+  .marco-selo::before { animation: none; }
   .glitch.falhando::before,
   .glitch.falhando::after { display: none; }
   .glitch.falhando { background-image: none; }   /* os blocos do fundo */
@@ -2720,7 +3045,7 @@ html.js .boot.boot-pulado {
     <div class="envolve">
       <div class="cabeca-secao revelar">
         <p class="rotulo"><b>05</b> — trajetória</p>
-        <h2 class="titulo-secao">Como eu <em>cheguei até aqui</em>.</h2>
+        <h2 class="titulo-secao">Trajetória <em>profissional</em>.</h2>
         <p class="sub-secao">
           Três cargos na Supermídia em pouco mais de um ano, sempre no mesmo
           sentido: sair da operação e chegar mais perto de onde o sistema
@@ -2729,43 +3054,250 @@ html.js .boot.boot-pulado {
         <div class="risco" aria-hidden="true"></div>
       </div>
 
-      <ol class="linha-tempo">
-        <li class="marco agora revelar">
-          <p class="ano">2026 — agora</p>
-          <h3>Analista de helpdesk júnior na Supermídia</h3>
-          <p>Instalo e configuro os sistemas Supermídia e RX direto no ambiente do cliente: requisito, serviço, conectividade, SQL Server. Em Android, uso ADB para instalar, parametrizar e depurar. Quase tudo remoto — cada cliente tem um ambiente e uma rede diferentes, e é normalmente aí que mora o problema.</p>
-        </li>
-        <li class="marco revelar">
-          <p class="ano">2025 — 2026</p>
-          <h3>Analista de suporte técnico</h3>
-          <p>Aqui o chamado parou de terminar na tela. Log, reprodução do cenário, consulta em PostgreSQL, integração suspeita — e a documentação do incidente com evidência, para produto, QA e desenvolvimento conseguirem agir. Depois, validar a correção e olhar se voltou.</p>
-        </li>
-        <li class="marco revelar">
-          <p class="ano">2025</p>
-          <h3>Segurança virou o foco</h3>
-          <p>Parei de tratar segurança como assunto paralelo e comecei a estudar como um dado vaza de verdade — engenharia social, credencial reaproveitada, log que ninguém leu. A partir dali passou a ser o critério de tudo que eu construo.</p>
-        </li>
-        <li class="marco revelar">
-          <p class="ano">início de 2025</p>
-          <h3>Entrei na Supermídia</h3>
-          <p>Comecei como técnico preparador de dados, cuidando da rotina de dados que os clientes usam e caçando inconsistência. Foi onde ficou claro que o erro quase nunca começa onde o usuário está olhando.</p>
-        </li>
-        <li class="marco revelar">
-          <p class="ano">2024</p>
-          <h3>Entrei em ADS</h3>
-          <p>Programar já tinha ficado sério, mas ficou claro que código sozinho não me bastava. Queria a stack inteira: banco, servidor, rede e a aplicação em cima.</p>
-        </li>
-        <li class="marco revelar">
-          <p class="ano">2023</p>
-          <h3>Parei de tratar como hobby</h3>
-          <p>Decidi que a resposta era o que eu já fazia por conta: mexer em máquina e entender por que parou de funcionar. Mudou o método, não o assunto — virou estudo com hora marcada.</p>
-        </li>
-        <li class="marco revelar">
-          <p class="ano">2022</p>
-          <h3>Fim do ensino médio</h3>
-          <p>Terminei com a pergunta em aberto: e agora? Não tinha resposta pronta e levei um tempo para achar uma que se sustentasse.</p>
-        </li>
-      </ol>
+      <!--
+        Duas colunas: os marcos à esquerda, o radar grudado à direita.
+        Cada marco carrega o próprio .revelar, e o radar carrega o dele.
+        NÃO ponha .revelar no .traj-duas: a animação usa transform, e
+        transform em ancestral quebra o sticky do radar. Mesma nota da 04.
+
+        A lista é <ol> e não <ul> porque a ordem É o conteúdo — e ela vai do
+        presente para o passado. Quem lê com leitor de tela ouve "lista de 7
+        itens" e o primeiro é o de hoje, que é o que importa primeiro.
+
+        Os marcos são em primeira pessoa, como o resto da página: "instalo",
+        "parei", "entrei". Ao acrescentar um, siga a mesma voz.
+
+        O data-tipo tem par no CSS: só "cargo" ganha o anel de acento no
+        ponto do trilho. Se inventar um quarto tipo, decida lá o que ele faz.
+      -->
+      <div class="traj-duas">
+
+        <ol class="linha-tempo">
+          <li class="marco agora revelar" data-tipo="cargo">
+            <div class="marco-caixa">
+              <div class="marco-topo">
+                <span class="marco-ano">2026 — agora</span>
+                <span class="marco-tipo">cargo</span>
+                <span class="marco-selo">atual</span>
+              </div>
+              <h3>Analista de helpdesk júnior<span class="marco-onde">Supermídia</span></h3>
+              <p>Instalo e configuro os sistemas Supermídia e RX direto no ambiente do cliente: requisito, serviço, conectividade, SQL Server. Em Android, uso ADB para instalar, parametrizar e depurar. Quase tudo remoto — cada cliente tem um ambiente e uma rede diferentes, e é normalmente aí que mora o problema.</p>
+            </div>
+          </li>
+          <li class="marco revelar" data-tipo="cargo">
+            <div class="marco-caixa">
+              <div class="marco-topo">
+                <span class="marco-ano">2025 — 2026</span>
+                <span class="marco-tipo">cargo</span>
+              </div>
+              <h3>Analista de suporte técnico<span class="marco-onde">Supermídia</span></h3>
+              <p>Aqui o chamado parou de terminar na tela. Log, reprodução do cenário, consulta em PostgreSQL, integração suspeita — e a documentação do incidente com evidência, para produto, QA e desenvolvimento conseguirem agir. Depois, validar a correção e olhar se voltou.</p>
+            </div>
+          </li>
+          <li class="marco revelar" data-tipo="virada">
+            <div class="marco-caixa">
+              <div class="marco-topo">
+                <span class="marco-ano">2025</span>
+                <span class="marco-tipo">virada</span>
+              </div>
+              <h3>Segurança virou o foco</h3>
+              <p>Parei de tratar segurança como assunto paralelo e comecei a estudar como um dado vaza de verdade — engenharia social, credencial reaproveitada, log que ninguém leu. A partir dali passou a ser o critério de tudo que eu construo.</p>
+            </div>
+          </li>
+          <li class="marco revelar" data-tipo="cargo">
+            <div class="marco-caixa">
+              <div class="marco-topo">
+                <span class="marco-ano">início de 2025</span>
+                <span class="marco-tipo">cargo</span>
+              </div>
+              <h3>Entrei na Supermídia</h3>
+              <p>Comecei como técnico preparador de dados, cuidando da rotina de dados que os clientes usam e caçando inconsistência. Foi onde ficou claro que o erro quase nunca começa onde o usuário está olhando.</p>
+            </div>
+          </li>
+          <li class="marco revelar" data-tipo="formação">
+            <div class="marco-caixa">
+              <div class="marco-topo">
+                <span class="marco-ano">2024</span>
+                <span class="marco-tipo">formação</span>
+              </div>
+              <h3>Entrei em ADS</h3>
+              <p>Programar já tinha ficado sério, mas ficou claro que código sozinho não me bastava. Queria a stack inteira: banco, servidor, rede e a aplicação em cima.</p>
+            </div>
+          </li>
+          <li class="marco revelar" data-tipo="virada">
+            <div class="marco-caixa">
+              <div class="marco-topo">
+                <span class="marco-ano">2023</span>
+                <span class="marco-tipo">virada</span>
+              </div>
+              <h3>Parei de tratar como hobby</h3>
+              <p>Decidi que a resposta era o que eu já fazia por conta: mexer em máquina e entender por que parou de funcionar. Mudou o método, não o assunto — virou estudo com hora marcada.</p>
+            </div>
+          </li>
+          <li class="marco revelar" data-tipo="formação">
+            <div class="marco-caixa">
+              <div class="marco-topo">
+                <span class="marco-ano">2022</span>
+                <span class="marco-tipo">formação</span>
+              </div>
+              <h3>Fim do ensino médio</h3>
+              <p>Terminei com a pergunta em aberto: e agora? Não tinha resposta pronta e levei um tempo para achar uma que se sustentasse.</p>
+            </div>
+          </li>
+        </ol>
+
+        <!--
+          Radar de topologia. Enfeite temático, e assumido como tal:
+          aria-hidden, nenhum dado aqui que o texto ao lado já não diga.
+
+          A GEOMETRIA, para quem for mexer. Centro em (180,180). Três eixos
+          a 0°, 120° e 240°, com um nó no anel de fora (r=150) e um no de
+          dentro (r=90) — mais o núcleo. A leitura é de fora para dentro:
+          o que o cliente encosta a mão fica na borda, o dado fica no meio.
+
+            eixo 0°   → (180,30)  e (180,90)
+            eixo 120° → (310,255) e (258,225)
+            eixo 240° → (50,255)  e (102,225)
+
+          Cada ligação aparece DUAS vezes, com o mesmo "d": uma como traço
+          parado (.radar-link) e outra como pacote correndo (.radar-fluxo).
+          Se mexer numa coordenada, mexa nas duas — elas andam em par.
+
+          O pathLength="100" normaliza toda ligação para 100 unidades,
+          independente do comprimento real. É o que deixa um único
+          stroke-dasharray no CSS servir para as nove de uma vez.
+
+          O --atraso dos pacotes não é múltiplo redondo de propósito: em
+          passo regular as nove linhas pulsam em bloco e o desenho vira um
+          metrônomo. Já o --atraso dos HALOS é conta, não gosto: é o ângulo
+          do nó convertido no instante em que a varredura passa por ele.
+          A fórmula está no CSS, em .radar-halo.
+        -->
+        <div class="traj-radar revelar" aria-hidden="true">
+          <!--
+            O viewBox é quadrado e o desenho está centrado nele de propósito:
+            é isso que deixa o transform-origin da varredura ser simplesmente
+            o centro (180,180). Se mudar o viewBox, acerte o transform-origin
+            de .radar-varredura junto, ou a cunha passa a girar torta.
+            Sobram 30 unidades entre o anel de fora e a borda — é a faixa
+            onde vivem os rótulos e as marcas de bordo, e é apertada:
+            conferir sobreposição ao trocar qualquer palavra.
+          -->
+          <svg class="radar" viewBox="0 0 360 360" role="presentation" focusable="false">
+
+            <defs>
+              <!--
+                As paradas são pintadas por CSS (.varre-*), e não por
+                atributo: var(--accent) não vale em atributo de apresentação,
+                e a regra da casa é cor nenhuma fora do :root.
+
+                ⚠️ userSpaceOnUse é obrigatório aqui. No padrão
+                (objectBoundingBox) o cx/cy de 50% cai no centro da CAIXA DA
+                CUNHA — que fica lá pelo meio do raio — e o brilho vira um
+                borrão solto no meio do nada. Com userSpaceOnUse o centro do
+                gradiente é o centro do radar, que é onde a cunha nasce.
+              -->
+              <radialGradient id="radar-varredura" gradientUnits="userSpaceOnUse"
+                              cx="180" cy="180" r="150">
+                <stop class="varre-perto" offset="0"/>
+                <stop class="varre-meio"  offset=".45"/>
+                <stop class="varre-longe" offset="1"/>
+              </radialGradient>
+            </defs>
+
+            <circle class="radar-disco" cx="180" cy="180" r="150"/>
+
+            <g class="radar-aneis">
+              <circle cx="180" cy="180" r="150"/>
+              <circle cx="180" cy="180" r="120" class="anel-tracejado"/>
+              <circle cx="180" cy="180" r="90"/>
+            </g>
+
+            <!-- marcas de bordo a 60°, 180° e 300°: nos vãos entre os eixos -->
+            <g class="radar-marcas">
+              <line x1="302.98" y1="109" x2="316.83" y2="101"/>
+              <line x1="180"    y1="322" x2="180"    y2="338"/>
+              <line x1="57.02"  y1="109" x2="43.17"  y2="101"/>
+            </g>
+
+            <g class="radar-links">
+              <path class="radar-link" pathLength="100" d="M180,30 L180,90"/>
+              <path class="radar-link" pathLength="100" d="M310,255 L258,225"/>
+              <path class="radar-link" pathLength="100" d="M50,255 L102,225"/>
+              <path class="radar-link" pathLength="100" d="M180,90 L180,180"/>
+              <path class="radar-link" pathLength="100" d="M258,225 L180,180"/>
+              <path class="radar-link" pathLength="100" d="M102,225 L180,180"/>
+              <path class="radar-link" pathLength="100" d="M180,90 L258,225"/>
+              <path class="radar-link" pathLength="100" d="M102,225 L180,90"/>
+              <path class="radar-link" pathLength="100" d="M102,225 L258,225"/>
+            </g>
+
+            <g class="radar-fluxos">
+              <path class="radar-fluxo" pathLength="100" style="--atraso: 0s"    d="M180,30 L180,90"/>
+              <path class="radar-fluxo" pathLength="100" style="--atraso: .35s"  d="M310,255 L258,225"/>
+              <path class="radar-fluxo" pathLength="100" style="--atraso: .85s"  d="M50,255 L102,225"/>
+              <path class="radar-fluxo" pathLength="100" style="--atraso: 1.25s" d="M180,90 L180,180"/>
+              <path class="radar-fluxo" pathLength="100" style="--atraso: 1.7s"  d="M258,225 L180,180"/>
+              <path class="radar-fluxo" pathLength="100" style="--atraso: 2.15s" d="M102,225 L180,180"/>
+              <path class="radar-fluxo" pathLength="100" style="--atraso: 2.6s"  d="M180,90 L258,225"/>
+              <path class="radar-fluxo" pathLength="100" style="--atraso: 3.05s" d="M102,225 L180,90"/>
+              <path class="radar-fluxo" pathLength="100" style="--atraso: 3.55s" d="M102,225 L258,225"/>
+            </g>
+
+            <!--
+              A varredura. A cunha vai de 0° a 70°; girando no sentido
+              horário, quem vai NA FRENTE é a borda de 70° — por isso a
+              agulha está desenhada nela, e não na de 0°.
+              O ponto (320.95, 128.7) é 180 + 150·sen70 , 180 − 150·cos70.
+            -->
+            <g class="radar-varredura">
+              <path class="radar-cunha" d="M180,180 L180,30 A150,150 0 0,1 320.95,128.7 Z"/>
+              <line class="radar-agulha" x1="180" y1="180" x2="320.95" y2="128.7"/>
+            </g>
+
+            <!-- o ping do núcleo: o dado no meio está sempre sendo pedido -->
+            <circle class="radar-ping" cx="180" cy="180" r="13"/>
+
+            <g class="radar-nos">
+              <circle class="radar-halo"  cx="180" cy="30"  r="15" style="--atraso: 7.25s"/>
+              <circle class="radar-ponto borda" cx="180" cy="30"  r="6"/>
+              <circle class="radar-halo"  cx="310" cy="255" r="15" style="--atraso: 1.25s"/>
+              <circle class="radar-ponto borda" cx="310" cy="255" r="6"/>
+              <circle class="radar-halo"  cx="50"  cy="255" r="15" style="--atraso: 4.25s"/>
+              <circle class="radar-ponto borda" cx="50"  cy="255" r="6"/>
+
+              <circle class="radar-halo"  cx="180" cy="90"  r="15" style="--atraso: 7.25s"/>
+              <circle class="radar-ponto" cx="180" cy="90"  r="6"/>
+              <circle class="radar-halo"  cx="258" cy="225" r="15" style="--atraso: 1.25s"/>
+              <circle class="radar-ponto" cx="258" cy="225" r="6"/>
+              <circle class="radar-halo"  cx="102" cy="225" r="15" style="--atraso: 4.25s"/>
+              <circle class="radar-ponto" cx="102" cy="225" r="6"/>
+
+              <circle class="radar-ponto" cx="180" cy="180" r="7"/>
+            </g>
+
+            <!--
+              Os rótulos de baixo vivem espremidos entre o anel de fora e a
+              borda do viewBox, e os dois pares (anel de dentro / anel de
+              fora) caem quase na mesma vertical. Por isso os de dentro são
+              puxados PARA DENTRO (244 e 116, e não 258 e 102) e os de fora
+              descem até 290: sem esses dois ajustes as quatro palavras
+              formam um bolo só no rodapé do desenho.
+            -->
+            <g class="radar-rotulos">
+              <text x="180" y="12"  text-anchor="middle">cliente</text>
+              <text x="197" y="94">rede</text>
+              <text x="244" y="254" text-anchor="middle">serviço</text>
+              <text x="116" y="254" text-anchor="middle">firewall</text>
+              <text x="310" y="290" text-anchor="middle">integração</text>
+              <text x="50"  y="290" text-anchor="middle">dispositivo</text>
+              <text x="201" y="184" class="rotulo-nucleo">banco</text>
+            </g>
+
+          </svg>
+        </div>
+
+      </div>
     </div>
   </section>
 
