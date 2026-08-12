@@ -10,8 +10,6 @@
   Arquivo único. CSS e JS embutidos. Sem build, sem dependência de pacote.
 
   O QUE AINDA FALTA (procure por "FALTA:" neste arquivo):
-    - os três cartões de projeto        (seção 02)
-    - o número de chamados resolvidos   (seção 01)
     - o ID do Formspree                 (procure por SEU_ID_AQUI)
     - o link do currículo em PDF        (bloco comentado na seção 06)
 
@@ -34,19 +32,36 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script>
-  /* Roda antes da renderização para o tema não piscar ao carregar. */
+  /* Roda antes da renderização, para nada piscar ao carregar. */
   (function () {
-    document.documentElement.classList.add('js');
+    var raiz = document.documentElement;
+    raiz.classList.add('js');
+
     try {
       var salvo = localStorage.getItem('tema');
       if (salvo === 'light' || salvo === 'dark') {
-        document.documentElement.setAttribute('data-theme', salvo);
+        raiz.setAttribute('data-theme', salvo);
       } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-        document.documentElement.setAttribute('data-theme', 'light');
+        raiz.setAttribute('data-theme', 'light');
       }
     } catch (e) {
       /* localStorage bloqueado (aba anônima): fica no padrão escuro. */
     }
+
+    /* A decisão sobre o boot precisa sair AQUI, e não no script do rodapé:
+       lá embaixo a página já pintou, e a tela de boot entraria por cima do
+       conteúdo já visível — pisca feio. A classe nasce junto com o <html>.
+       Pula o boot quem já viu nesta aba e quem pediu menos movimento. */
+    var pula = false;
+    try {
+      pula = sessionStorage.getItem('boot') === 'visto';
+    } catch (e) {
+      /* sessionStorage bloqueado: o boot roda toda vez, sem quebrar nada. */
+    }
+    if (!pula && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      pula = true;
+    }
+    if (pula) raiz.classList.add('sem-boot');
   })();
 </script>
 
@@ -67,6 +82,35 @@
   --muted:    #A2978A;
   --accent:   #FFB13D;  /* âmbar: destaque, links, barras */
   --accent-2: #A8541A;  /* âmbar queimado: só forma decorativa */
+
+  /* --- glitch do título (2 cores) ---
+     O RGB-split imita a separação de canal de um sinal de vídeo ruim, e
+     é a única coisa da página que precisa de cor FORA da identidade: o
+     efeito depende de ler como vermelho e ciano. Aparecem em pulsos de
+     500ms, nunca carregam texto legível. Não troque junto com o tema. */
+  --glitch-1: #FF3B3B;
+  --glitch-2: #12E0FF;
+
+  /* --- cores de marca (só os logos da seção 04) ---
+     Único ponto do arquivo com hexadecimal que não é seu: são as cores
+     oficiais de cada tecnologia, e mexer nelas descaracteriza a marca.
+     Ficam aqui, e não junto dos SVGs, para a regra "nenhuma cor fora do
+     :root" continuar valendo.
+     Os valores abaixo são a versão CLAREADA. No original, o roxo do .NET
+     (#512BD4) e o preto do Java somem no fundo #0A0908 — o tema claro,
+     mais abaixo, devolve os tons originais. */
+  --m-csharp:    #A179DC;
+  --m-dotnet:    #8A6FE8;
+  --m-node:      #6CB44F;
+  --m-java:      #F89820;
+  --m-python:    #4B8BBE;
+  --m-postgres:  #6E8FEF;
+  --m-sqlserver: #EE352C;
+  --m-js:        #F7DF1E;
+  --m-ts:        #4C8FDA;
+  --m-react:     #61DAFB;
+  --m-git:       #F05032;
+  --m-linux:     #FCC624;
 
   /* --- tipografia --- */
   --f-display: 'Archivo Black', 'Arial Black', system-ui, sans-serif;
@@ -114,6 +158,21 @@
   --muted:    #5C5347;
   --accent:   #8A5200;
   --accent-2: #A8541A;
+
+  /* Caminho inverso do tema escuro: aqui o amarelo do JavaScript e o ciano
+     do React é que sumiriam. Roxo, azul e vermelho voltam ao valor oficial. */
+  --m-csharp:    #68217A;
+  --m-dotnet:    #512BD4;
+  --m-node:      #417E32;
+  --m-java:      #B25000;
+  --m-python:    #2B5F86;
+  --m-postgres:  #2F4FBF;
+  --m-sqlserver: #B8231C;
+  --m-js:        #7A6B00;
+  --m-ts:        #2A66A8;
+  --m-react:     #0B7C9E;
+  --m-git:       #C2371F;
+  --m-linux:     #8A6400;
 }
 
 /* ==========================================================================
@@ -417,6 +476,15 @@ section {
   color: var(--accent);
   font-weight: 500;
 }
+/* variante com um segundo texto encostado na margem direita */
+.rotulo-duplo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.rotulo-meta { text-transform: none; letter-spacing: .08em; }
 
 .titulo-secao {
   font-family: var(--f-display);
@@ -680,22 +748,6 @@ section {
   50%      { transform: translate3d(14px, -14px, 0); }
 }
 
-/* poeira: pontinhos piscando pelo hero inteiro */
-.poeira {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-.poeira circle { fill: var(--accent); }
-.poeira .g1 { animation: cintila 4s ease-in-out infinite; }
-.poeira .g2 { animation: cintila 6s ease-in-out infinite 1.2s; }
-.poeira .g3 { animation: cintila 5s ease-in-out infinite 2.4s; }
-@keyframes cintila {
-  0%, 100% { opacity: .15; }
-  50%      { opacity: .8; }
-}
-
 /* --- o avatar: a frente da composição --- */
 .avatar {
   position: relative;
@@ -892,6 +944,27 @@ section {
   letter-spacing: .04em;
   margin-top: .6rem;
   line-height: 1.5;
+}
+
+/* Cartão do Tux: número à esquerda, pinguim encostado na direita.
+   A altura do pinguim é menor que a do conteúdo de texto do cartão
+   (número + legenda dão ~70px), então ele NÃO estica a linha da grade —
+   os quatro cartões continuam do mesmo tamanho. Mexer no clamp para mais
+   de 84px quebra isso. */
+.numero-tux {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+.numero-tux img {
+  flex-shrink: 0;
+  height: clamp(62px, 8vw, 84px);
+  width: auto;
+  border-radius: 4px;
+  /* O fundo da arte é preto e o cartão do tema escuro quase preto: sem
+     isso a emenda aparece. A borda resolve nos dois temas de uma vez. */
+  border: 1px solid var(--line);
 }
 
 /* ==========================================================================
@@ -1174,10 +1247,31 @@ section {
   background: var(--line);
 }
 
-.niveis {
+/* Duas colunas: as barras à esquerda, a grade de logos à direita.
+   A coluna dos logos é bem mais curta que a das barras (4 fileiras contra
+   18 níveis), então ela gruda no topo e acompanha a rolagem — sem isso
+   sobra meio metro de vão branco do lado direito. */
+.stack-duas {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
-  gap: clamp(1.15rem, 3vw, 1.7rem);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  gap: clamp(2rem, 6vw, 4.5rem);
+  align-items: start;
+}
+
+.nota-regua {
+  font-family: var(--f-mono);
+  font-size: var(--t-min);
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 48ch;
+  margin-bottom: clamp(1.75rem, 4vw, 2.5rem);
+}
+.nota-regua strong { color: var(--text); font-weight: 500; }
+
+/* lista corrida, uma barra por linha, cada uma na largura toda da coluna */
+.niveis-lista {
+  display: grid;
+  gap: clamp(1rem, 2.4vw, 1.35rem);
 }
 
 .nivel-topo {
@@ -1190,6 +1284,64 @@ section {
   font-size: var(--t-peq);
 }
 .nivel-topo .valor { color: var(--muted); }
+
+.nivel-topo .nome::before {
+  /* Duas vezes de propósito. A segunda tem o texto alternativo ("" depois
+     da barra), que zera a leitura em voz alta — o marcador é decoração e
+     não deve ser anunciado antes do nome da tecnologia. Navegador que não
+     entende essa sintaxe descarta só a segunda linha e fica com a primeira,
+     em vez de perder o marcador inteiro. */
+  content: "\25B8";
+  content: "\25B8" / "";
+  color: var(--accent);
+  margin-right: .55rem;
+}
+
+.stack-logos {
+  position: sticky;
+  top: calc(var(--alt-nav) + 2.5rem);
+}
+
+.grade-logos {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1.75rem, 4vw, 2.75rem) 1rem;
+}
+.grade-logos li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .75rem;
+  text-align: center;
+}
+/* cada <li> traz --cor apontando para um token --m-* */
+.grade-logos svg {
+  width: clamp(30px, 3.2vw, 38px);
+  height: clamp(30px, 3.2vw, 38px);
+  fill: var(--cor);
+}
+.grade-logos span {
+  font-family: var(--f-mono);
+  font-size: var(--t-min);
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .grade-logos svg { transition: transform .3s cubic-bezier(.2, .7, .2, 1); }
+  .grade-logos li:hover svg { transform: translateY(-5px) scale(1.07); }
+}
+
+/* Abaixo disso a coluna dupla não cabe: os logos vão para baixo das barras
+   e o sticky sai de cena (grudar num container de altura total não gruda). */
+@media (max-width: 900px) {
+  .stack-duas { grid-template-columns: 1fr; }
+  .stack-logos { position: static; }
+}
+@media (max-width: 400px) {
+  .grade-logos { gap: 1.5rem .75rem; }
+}
 
 /* a barra é decorativa: o número já está no texto acima, legível por leitor de tela */
 .barra {
@@ -1422,7 +1574,434 @@ section {
 .rodape a:hover { color: var(--accent); }
 
 /* ==========================================================================
-   14. REVELAÇÃO AO ROLAR
+   14. EFEITOS
+   Nada aqui é necessário para ler a página: tudo depende de JS, e tudo
+   morre na media query de movimento reduzido, lá embaixo.
+   ========================================================================== */
+
+/* ---- 14.1 tela de boot ------------------------------------------------
+   O visual é 100% CSS de propósito. Se o JS do rodapé nunca rodar (erro,
+   bloqueador, rede caindo no meio), a animação de saída ainda leva a tela
+   embora sozinha — a página não fica trancada atrás de um overlay preto.
+   O JS só grava a sessão, dispara o evento e tira o nó do DOM.
+   A classe .sem-boot vem do script do <head>, antes do primeiro paint. */
+
+.boot {
+  display: none;
+
+  /* Os dois tempos do boot vivem AQUI, e em nenhum outro ponto do CSS.
+     A saída da tela, a cascata das linhas e a barra de progresso derivam
+     todas destes dois valores — mexer aqui move o conjunto junto, sem
+     números soltos para sincronizar. O único que fica de fora é o
+     setTimeout do JS lá no rodapé, que é rede de segurança. */
+  --boot-espera: 2.2s;    /* quanto a tela fica antes de começar a sair */
+  --boot-passo:  300ms;   /* intervalo de uma linha do log para a próxima */
+}
+
+html.js:not(.sem-boot) .boot {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: var(--bg);
+  animation: boot-sai .35s ease var(--boot-espera) forwards;
+}
+
+/* Grade de pontos com vinheta, atrás do painel. É a mesma trama do resto
+   da página, redesenhada aqui porque o fundo do boot é opaco e cobre a
+   .trama de verdade, que vive em z-index negativo. */
+.boot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 60%),
+    radial-gradient(color-mix(in srgb, var(--line) 90%, transparent) 1px,
+      transparent 1px);
+  background-size: auto, 26px 26px;
+}
+
+/* ---- o painel -------------------------------------------------------- */
+
+.boot-painel {
+  position: relative;
+  width: min(100%, 34rem);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 24px 60px -24px rgb(0 0 0 / .8),
+    0 0 45px -10px color-mix(in srgb, var(--accent) 25%, transparent);
+  overflow: hidden;
+  animation: boot-liga .4s ease both;
+}
+
+/* A varredura do CRT, igual à do terminal da seção 01 — mesmo @keyframes,
+   só que mais rápida: o painel vive 2.5s, uma passada de 3.2s não daria
+   nem uma volta completa. */
+.boot-painel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent,
+    color-mix(in srgb, var(--accent) 70%, transparent), transparent);
+  box-shadow: 0 0 14px 2px color-mix(in srgb, var(--accent) 40%, transparent);
+  animation: varre 1.6s linear infinite;
+}
+
+/* Os quatro colchetes de HUD. São oito gradientes chapados num elemento
+   vazio: cada canto é um traço deitado mais um em pé. Fica num <i> em vez
+   de num pseudo do painel porque os dois pseudos do painel já têm dono —
+   e uma borda comum não daria o recorte só nos cantos. */
+.boot-cantos {
+  --c: color-mix(in srgb, var(--accent) 70%, transparent);
+  position: absolute;
+  inset: 8px;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--c), var(--c)) 0    0    / 14px 2px  no-repeat,
+    linear-gradient(var(--c), var(--c)) 0    0    / 2px  14px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0    / 14px 2px  no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0    / 2px  14px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0    100% / 14px 2px  no-repeat,
+    linear-gradient(var(--c), var(--c)) 0    100% / 2px  14px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / 14px 2px  no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / 2px  14px no-repeat;
+}
+
+/* ---- barra de título ------------------------------------------------- */
+
+.boot-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .7rem 1.1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 16%, var(--line));
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  font-family: var(--f-mono);
+  font-size: var(--t-min);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.boot-marca  { color: var(--text); }
+.boot-arroba { color: var(--accent); }
+.boot-versao { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- o log ----------------------------------------------------------- */
+
+.boot-log {
+  position: relative;
+  padding: 1.1rem 1.1rem 1.2rem;
+  overflow: hidden;
+  font-family: var(--f-mono);
+  font-size: clamp(.7rem, 1.15vw, .8125rem);
+  line-height: 2.05;
+}
+
+/* Scanlines só sobre o log, não no painel inteiro: é o pedaço que finge
+   ser tubo. Passando por cima da barra de título e da barra de progresso
+   o efeito vira sujeira em vez de textura. */
+.boot-log::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom,
+    color-mix(in srgb, var(--accent) 6%, transparent) 0 1px,
+    transparent 1px 3px);
+}
+
+.boot-linha {
+  opacity: 0;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: boot-entra .25s ease forwards;
+  /* o .25s de partida é o tempo do painel abrir: linha entrando enquanto
+     a caixa ainda cresce sai tremida */
+  animation-delay: calc(.25s + var(--i) * var(--boot-passo));
+}
+.boot-ok {
+  color: var(--accent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.boot-cur {
+  display: inline-block;
+  width: .55em;
+  height: 1em;
+  background: var(--accent);
+  vertical-align: -.15em;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
+  animation: pisca 1.1s steps(2, start) infinite;
+}
+
+/* ---- rodapé: progresso ----------------------------------------------- */
+
+.boot-rodape {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  padding: .7rem 1.1rem .8rem;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 16%, var(--line));
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+}
+
+.boot-barra {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--line) 80%, transparent);
+  overflow: hidden;
+}
+/* A barra enche no mesmo tempo da espera: quando ela chega ao fim, a tela
+   começa a sair. É por isso que as duas leem o mesmo --boot-espera. */
+.boot-barra::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(to right,
+    color-mix(in srgb, var(--accent) 40%, transparent), var(--accent));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent);
+  animation: boot-carrega var(--boot-espera) linear forwards;
+}
+
+.boot-dica {
+  flex: none;
+  font-family: var(--f-mono);
+  font-size: var(--t-min);
+  color: var(--muted);
+  white-space: nowrap;
+  opacity: 0;
+  animation: boot-entra .3s ease .9s forwards;
+}
+
+@keyframes boot-entra { to { opacity: 1; } }
+@keyframes boot-carrega { from { width: 0; } to { width: 100%; } }
+/* CRT ligando: a imagem abre de uma linha para a caixa inteira, estourada
+   de brilho, e assenta. O 1.03 no meio é o repique do tubo. */
+@keyframes boot-liga {
+  0%   { opacity: 0; transform: scaleY(.04); filter: brightness(2.2); }
+  55%  { opacity: 1; transform: scaleY(1.03); }
+  100% { opacity: 1; transform: scaleY(1);    filter: brightness(1); }
+}
+@keyframes boot-sai {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+/* clique ou tecla durante o boot: sai na hora */
+html.js .boot.boot-pulado {
+  animation: boot-sai .2s ease forwards;
+}
+
+/* ---- 14.2 glitch do título -------------------------------------------
+   Fica em cada <span> do h1, e não no h1 inteiro: os spans são display
+   block, então um attr(data-text) só sairia numa linha e desalinharia.
+
+   São TRÊS camadas empilhadas, e é a soma das três que dá o estrago:
+     1. o próprio span, com blocos chapados de --bg piscando no fundo
+     2. a cópia vermelha (::before), em faixa, com fundo opaco
+     3. a cópia ciano (::after), em outra faixa, também opaca
+
+   Tudo anda em steps(1, end): sem interpolação, cada quadro SALTA para o
+   próximo. É essa ausência de transição que faz ler como defeito digital
+   em vez de animação — glitch que desliza suave parece enfeite. Com .5s
+   e 10 quadros, o efeito roda a uns 20fps, que é o ponto certo de
+   "cartucho com mau contato". */
+
+.glitch { position: relative; }
+
+/* Os blocos do fundo. Um retângulo só de --bg, que salta de tamanho e de
+   posição e some entre um salto e outro — é o "quadrado preto" que come
+   pedaços da linha. Fica ATRÁS do texto real, então o que ele apaga é o
+   brilho do hero, não a letra. */
+.glitch.falhando {
+  background-image: linear-gradient(var(--bg), var(--bg));
+  background-repeat: no-repeat;
+  animation: glitch-bloco .5s steps(1, end) 1;
+}
+
+/* As duas cópias levam fundo opaco, e é daí que vem o visual de bloco.
+   Cada uma cobre a caixa inteira do span e é recortada numa faixa por
+   clip-path: dentro da faixa some o texto real e sobra o retângulo de
+   fundo com a cópia colorida por cima.
+
+   Como o span é display:block, essa caixa tem a largura do h1 inteiro —
+   então na linha curta ("STACK") o bloco sobra bem à direita da palavra,
+   por cima do brilho do hero. Já foi motivo de eu NÃO usar fundo aqui;
+   é exatamente o artefato pedido, então agora é o efeito. */
+.glitch.falhando::before,
+.glitch.falhando::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--bg);
+  text-shadow: none;   /* o .destaque tem brilho âmbar; nas cópias suja */
+}
+.glitch.falhando::before {
+  color: var(--glitch-1);
+  animation: glitch-a .5s steps(1, end) 1;
+}
+.glitch.falhando::after {
+  color: var(--glitch-2);
+  animation: glitch-b .5s steps(1, end) 1;
+}
+
+/* As faixas das duas cópias são propositalmente complementares: quando a
+   vermelha está no topo a ciano está embaixo. Se coincidissem, a de cima
+   taparia a de baixo e o efeito viraria uma cor só piscando.
+   O último quadro fecha a faixa em zero E zera a opacidade — sem isso o
+   inset(0 0 0 0) deixaria o bloco opaco tapando o título. */
+@keyframes glitch-a {
+  0%   { clip-path: inset(6%  0 78% 0); transform: translate(-16px, -3px); }
+  10%  { clip-path: inset(62% 0 14% 0); transform: translate(13px,   2px); }
+  20%  { clip-path: inset(31% 0 53% 0); transform: translate(-22px,  0); }
+  30%  { clip-path: inset(85% 0 3%  0); transform: translate(9px,   -5px); }
+  42%  { clip-path: inset(17% 0 67% 0); transform: translate(-10px,  4px); }
+  54%  { clip-path: inset(47% 0 35% 0); transform: translate(19px,   0); }
+  66%  { clip-path: inset(72% 0 16% 0); transform: translate(-7px,   3px); }
+  78%  { clip-path: inset(25% 0 61% 0); transform: translate(11px,  -2px); }
+  90%  { clip-path: inset(55% 0 39% 0); transform: translate(-3px,   0); }
+  100% { clip-path: inset(50% 0 50% 0); transform: none; opacity: 0; }
+}
+@keyframes glitch-b {
+  0%   { clip-path: inset(68% 0 12% 0); transform: translate(17px,   3px); }
+  10%  { clip-path: inset(9%  0 74% 0); transform: translate(-14px, -2px); }
+  20%  { clip-path: inset(78% 0 8%  0); transform: translate(21px,   1px); }
+  30%  { clip-path: inset(38% 0 44% 0); transform: translate(-12px,  4px); }
+  42%  { clip-path: inset(60% 0 22% 0); transform: translate(8px,   -3px); }
+  54%  { clip-path: inset(12% 0 71% 0); transform: translate(-20px,  0); }
+  66%  { clip-path: inset(43% 0 41% 0); transform: translate(6px,   -2px); }
+  78%  { clip-path: inset(81% 0 6%  0); transform: translate(-9px,   2px); }
+  90%  { clip-path: inset(28% 0 58% 0); transform: translate(4px,    0); }
+  100% { clip-path: inset(50% 0 50% 0); transform: none; opacity: 0; }
+}
+
+/* O background-size 0 nos quadros pares é o que faz o bloco PISCAR em vez
+   de escorregar de um lugar para o outro: ele some e reaparece noutro
+   canto. Largura acima de 100% é de propósito — bloco que vaza da caixa
+   não deixa o olho encontrar a borda e adivinhar o truque. */
+@keyframes glitch-bloco {
+  0%   { background-size: 0 0; }
+  12%  { background-size: 82%  30%; background-position: 3%   58%; }
+  22%  { background-size: 0 0; }
+  36%  { background-size: 114% 20%; background-position: -8%  10%; }
+  46%  { background-size: 0 0; }
+  58%  { background-size: 61%  46%; background-position: 34%  72%; }
+  68%  { background-size: 0 0; }
+  80%  { background-size: 97%  16%; background-position: 6%   34%; }
+  88%  { background-size: 0 0; }
+  100% { background-size: 0 0; }
+}
+
+/* ---- 14.3 partículas --------------------------------------------------
+   Substituíram a poeira em SVG. Mesmo lugar na pilha que o brilho (-1),
+   e depois dele no HTML, então ficam por cima do brilho e atrás de tudo
+   que é conteúdo. A cor sai do token --accent, lida pelo JS a cada troca
+   de tema — é por isso que não há cor nenhuma declarada aqui. */
+
+.particulas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ---- 14.4 CRT no terminal --------------------------------------------
+   Duas camadas dentro do .terminal, que já é position:relative e
+   overflow:hidden. z-index 2 põe as duas acima do texto; as duas são
+   pointer-events:none, então nada atrapalha seleção de texto. */
+
+.terminal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom,
+    color-mix(in srgb, var(--accent) 5%, transparent) 0 1px,
+    transparent 1px 3px);
+}
+.terminal::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent,
+    color-mix(in srgb, var(--accent) 65%, transparent), transparent);
+  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+  animation: varre 3.2s linear infinite;
+}
+@keyframes varre {
+  0%   { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* ---- 14.5 tilt 3D nos cartões de projeto -----------------------------
+   A perspectiva mora na GRADE, não no cartão: no cartão, cada um teria o
+   próprio ponto de fuga e a fileira inteira pareceria torta. O tilt em si
+   é transform inline posto pelo JS, só em ponteiro fino. */
+
+.grade-projetos { perspective: 900px; }
+.projeto { transform-style: preserve-3d; }
+
+.tilt-brilho {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s ease;
+  background: radial-gradient(circle 220px at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--accent) 13%, transparent), transparent 70%);
+}
+.projeto:hover .tilt-brilho { opacity: 1; }
+
+/* ---- 14.6 ondulação nos botões ---------------------------------------
+   O .btn já nasce position:relative e overflow:hidden, então o círculo é
+   recortado pela borda do botão sem mais nada. O JS cria e remove o nó. */
+
+.ondulacao {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  opacity: .5;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--text) 40%, transparent);
+  animation: ondula .6s ease-out forwards;
+}
+/* no botão cheio o fundo já é o âmbar: a onda precisa ser escura */
+.btn-cheio .ondulacao { background: color-mix(in srgb, var(--bg) 45%, transparent); }
+
+@keyframes ondula {
+  to { transform: scale(1); opacity: 0; }
+}
+
+/* ==========================================================================
+   15. REVELAÇÃO AO ROLAR
    Só entra em ação com JS ativo — sem JS, o conteúdo nasce visível.
    ========================================================================== */
 
@@ -1436,8 +2015,23 @@ section {
   transform: none;
 }
 
+/* Filhos repetidos de um bloco que é um .revelar só: sem isso os 12 logos
+   nascem no mesmo instante. O atraso de cada um é posto pelo JS.
+   Só marque .cascata onde o filho NÃO tem transform próprio — em .numero,
+   por exemplo, isto brigaria com o translateY do hover. */
+.js .cascata > * {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .5s ease, transform .5s ease;
+}
+.js .revelado.cascata > *,
+.js .revelado .cascata > * {
+  opacity: 1;
+  transform: none;
+}
+
 /* ==========================================================================
-   15. AJUSTES DE TELA
+   16. AJUSTES DE TELA
    ========================================================================== */
 
 @media (max-width: 940px) {
@@ -1462,7 +2056,7 @@ section {
 }
 
 /* ==========================================================================
-   16. MOVIMENTO REDUZIDO
+   17. MOVIMENTO REDUZIDO
    Respeita quem pediu menos animação no sistema operacional.
    ========================================================================== */
 
@@ -1478,19 +2072,73 @@ section {
 
   /* nada de conteúdo preso invisível quando a transição não roda */
   .js .revelar { opacity: 1; transform: none; }
+  .js .cascata > * { opacity: 1; transform: none; }
   .js .term-linha { opacity: 1; }
   .barra i { transform: scaleX(1); }
   .forma, .avatar { animation: none; }
+
+  /* efeitos da seção 14: os que são só movimento saem inteiros.
+     O boot já é pulado no <head>; a regra aqui é a segunda tranca. */
+  .boot { display: none !important; }
+  .particulas { display: none; }
+  .ondulacao { display: none; }
+  .terminal::after { display: none; }          /* a varredura do CRT */
+  .glitch.falhando::before,
+  .glitch.falhando::after { display: none; }
+  .glitch.falhando { background-image: none; }   /* os blocos do fundo */
+  /* a textura de scanline do terminal fica: ela não se move */
+  /* o JS não põe atraso neste modo, mas se o sistema mudar no meio da
+     visita nada pode ficar esperando */
+  * { transition-delay: 0s !important; }
 }
 </style>
 </head>
 
 <body>
 
+<!--
+  Tela de boot. Nasce display:none e só aparece com .js e sem .sem-boot,
+  as duas decididas no <head> antes do primeiro paint. Quem entra sem
+  JavaScript nunca vê isto, e quem já viu nesta aba também não.
+  aria-hidden porque é enfeite: o leitor de tela vai direto ao conteúdo.
+  O --i de cada linha é o índice da cascata; a saída é pura CSS.
+
+  O .boot é o fundo de tela cheia; o painel centralizado é o .boot-painel.
+  Os dois <i> não têm conteúdo e existem só para o CSS pendurar desenho:
+  .boot-cantos são os quatro colchetes de HUD e .boot-barra é o progresso.
+-->
+<div class="boot" id="boot" aria-hidden="true">
+  <div class="boot-painel">
+    <i class="boot-cantos"></i>
+
+    <div class="boot-topo">
+      <span class="boot-marca">crinos<span class="boot-arroba">@</span>dev</span>
+      <span class="boot-versao">sys/init · 0x1A</span>
+    </div>
+
+    <div class="boot-log">
+      <p class="boot-linha" style="--i: 0"><span class="boot-ok">[  ok  ]</span> crinos.dev — inicializando</p>
+      <p class="boot-linha" style="--i: 1"><span class="boot-ok">[  ok  ]</span> montando /home/raul</p>
+      <p class="boot-linha" style="--i: 2"><span class="boot-ok">[  ok  ]</span> carregando stack · c# · .net · java · linux</p>
+      <p class="boot-linha" style="--i: 3"><span class="boot-ok">[  ok  ]</span> rede · tcp/ip · dns · log</p>
+      <p class="boot-linha" style="--i: 4"><span class="boot-ok">[ done ]</span> sessão pronta<span class="boot-cur"></span></p>
+    </div>
+
+    <div class="boot-rodape">
+      <i class="boot-barra"></i>
+      <!-- curto de propósito: a dica é flex:none e a barra é quem encolhe.
+           Num celular de 320px cada caractere aqui sai do tamanho da barra. -->
+      <span class="boot-dica">clique para pular</span>
+    </div>
+  </div>
+</div>
+
 <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
 <div class="trama" aria-hidden="true"></div>
 <div class="brilho" aria-hidden="true"></div>
+<!-- partículas: o JS desenha aqui. Vazio e invisível sem JS. -->
+<canvas class="particulas" id="particulas" aria-hidden="true"></canvas>
 <div class="progresso" id="progresso" aria-hidden="true"></div>
 
 <!-- ====================== BARRA FIXA ====================== -->
@@ -1535,28 +2183,6 @@ section {
   <!-- ====================== HERO ====================== -->
   <section class="hero" id="topo">
 
-    <!-- poeira: pontinhos piscando ao fundo. Puramente decorativo. -->
-    <svg class="poeira" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1000 600">
-      <g class="g1">
-        <circle cx="80"  cy="120" r="1.6"/><circle cx="240" cy="70"  r="1.1"/>
-        <circle cx="470" cy="150" r="1.4"/><circle cx="700" cy="90"  r="1.2"/>
-        <circle cx="905" cy="180" r="1.7"/><circle cx="150" cy="430" r="1.3"/>
-        <circle cx="610" cy="520" r="1.5"/><circle cx="820" cy="470" r="1.1"/>
-      </g>
-      <g class="g2">
-        <circle cx="330" cy="260" r="1.2"/><circle cx="560" cy="330" r="1.6"/>
-        <circle cx="90"  cy="290" r="1.4"/><circle cx="770" cy="250" r="1.3"/>
-        <circle cx="960" cy="380" r="1.5"/><circle cx="420" cy="560" r="1.2"/>
-        <circle cx="200" cy="200" r="1.1"/><circle cx="880" cy="60"  r="1.4"/>
-      </g>
-      <g class="g3">
-        <circle cx="520" cy="60"  r="1.3"/><circle cx="660" cy="410" r="1.2"/>
-        <circle cx="30"  cy="520" r="1.5"/><circle cx="380" cy="140" r="1.1"/>
-        <circle cx="740" cy="580" r="1.4"/><circle cx="930" cy="290" r="1.2"/>
-        <circle cx="270" cy="360" r="1.6"/><circle cx="500" cy="450" r="1.1"/>
-      </g>
-    </svg>
-
     <div class="envolve">
       <div class="hero-grade">
 
@@ -1565,9 +2191,16 @@ section {
             Full stack <i>•</i> APIS <i>•</i> segurança da informação
           </p>
 
-          <h1>
-            <span>Full stack</span>
-            <span class="destaque">& Cybersec</span>
+          <!--
+            O data-text de cada span alimenta o content:attr() das duas
+            cópias coloridas do glitch. Se você trocar o texto do título,
+            troque no data-text junto — senão o glitch pisca a frase velha.
+            O aria-label fixa o que o leitor de tela anuncia, para ele não
+            pegar o título no meio do embaralhamento do scramble.
+          -->
+          <h1 aria-label="Full stack & Cybersec">
+            <span class="glitch" data-text="Full stack">Full stack</span>
+            <span class="destaque glitch" data-text="& Cybersec">& Cybersec</span>
           </h1>
 
           <p class="sub">
@@ -1618,47 +2251,54 @@ section {
     <div class="envolve">
       <div class="cabeca-secao revelar">
         <p class="rotulo"><b>01</b> — sobre</p>
-        <h2 class="titulo-secao">Suporte de dia. <em>Back-end e segurança</em> no resto do tempo.</h2>
+        <h2 class="titulo-secao"><em>Por trás da tela</em></h2>
         <div class="risco" aria-hidden="true"></div>
       </div>
 
       <div class="sobre-grade">
         <div class="sobre-texto revelar">
-          <p>Tenho 21 anos, estou no <strong>4º semestre de Análise e Desenvolvimento de Sistemas</strong> e trabalho como <strong>analista de helpdesk júnior na Supermídia</strong>. É um lugar bom para aprender: chamado real, log real, usuário real. Nada roda em ambiente controlado.</p>
+          <p>Me chamo Raul Guilherme e tenho 21 anos. Estou no <strong>4º semestre de Análise e Desenvolvimento de Sistemas</strong> e trabalho como <strong>analista de helpdesk júnior na Supermídia</strong>. Todos os dias lido com: chamado real, log real, usuário real. Nada roda em ambiente controlado, e isso é a minha maior oportunidade de aprender todos os dias.</p>
 
-          <p>As duas perguntas que me trouxeram para cá são simples de fazer e difíceis de responder: <strong>o que exatamente leva uma conta de banco a ser clonada?</strong> E <strong>o que cada botão que você aperta faz por baixo?</strong> Uma virou interesse por segurança da informação, a outra por back-end. Na prática são a mesma pergunta vista de dois lados.</p>
+          <p>Me interessei por desenvolvimento desde sempre pois tive contato com tecnologia desde muito cedo, e acabei entrando de cabeça na cybersec quando <strong>me aprofundei em Linux durante uma onda de interesse.</strong>
+          <p>Estudo Java, C#/.NET e APIs REST do lado do servidor, e do outro lado o que sustenta tudo: banco, Linux, rede, log. Apaixonado por Linux, venho construindo atualmente minha própria LFS.</p>
 
-          <p>Estudo C#/.NET e APIs REST do lado do servidor, e do outro lado o que sustenta tudo: banco, Linux, rede, log. Gosto do que faço — de um jeito sóbrio, sem transformar em identidade. Continuo depois do expediente porque a pergunta ainda está aberta, não porque virei o trabalho.</p>
-
-          <p class="frase">Suporte me ensinou uma coisa que curso nenhum ensina: o problema quase nunca é onde o usuário aponta.</p>
+          <p class="frase">Suporte me ensinou a alegria de consertar as coisas, e principalmente, de evitar a necessidade de consertos</p>
         </div>
 
         <div class="sobre-lado">
           <!--
-            FALTA: o primeiro número. Os outros três saem da sua trajetória e
-            da sua stack, então são verificáveis. Para escolher o de chamados,
-            abra o Movidesk, filtre por responsável e pelo último ano, e
-            arredonde para BAIXO (470 vira "+400", não "500").
-            Critério completo em MELHORIAS.md, seção 1.
-            O atributo data-num é o alvo da contagem animada; o texto dentro
-            do <b> é o que aparece sem JavaScript.
+            Os quatro números são verificáveis: saem da trajetória e da stack.
+            Para trocar qualquer um, mexa nos DOIS lugares — data-num é o alvo
+            da contagem animada, e o texto dentro do <b> é o que aparece sem
+            JavaScript. data-prefixo e data-sufixo sobrevivem à contagem.
+            Arredonde sempre para BAIXO: é o que se defende numa entrevista.
           -->
           <div class="numeros revelar">
             <div class="numero">
-              <b data-num="[N]">[N]</b>
-              <span>chamados resolvidos em 2025</span>
+              <b data-num="2">2</b>
+              <span>Projetos aplicados com clientes reais</span>
             </div>
             <div class="numero">
-              <b data-num="3">3</b>
-              <span>anos estudando T.I. a sério</span>
-            </div>
-            <div class="numero">
-              <b data-num="4" data-sufixo="º">4º</b>
-              <span>semestre de ADS</span>
+              <b data-num="5">5</b>
+              <span>Anos estudando T.I.</span>
             </div>
             <div class="numero">
               <b data-num="20" data-prefixo="+">+20</b>
-              <span>tecnologias na stack</span>
+              <span>Tecnologias na stack</span>
+            </div>
+            <!--
+              O Tux é o único cartão com imagem, então ganha o modificador
+              .numero-tux: vira flex para o pinguim encostar na direita.
+              O alt vai vazio de propósito — "1 Tux" já é o texto do cartão,
+              e repetir "pinguim do Linux" só faria o leitor de tela dizer
+              a mesma coisa duas vezes.
+            -->
+            <div class="numero numero-tux">
+              <div>
+                <b data-num="1">1</b>
+                <span>Tux</span>
+              </div>
+              <img src="assets/tux.png" alt="" width="160" height="240" loading="lazy" decoding="async">
             </div>
           </div>
 
@@ -1696,7 +2336,7 @@ section {
     <div class="envolve">
       <div class="cabeca-secao revelar">
         <p class="rotulo"><b>02</b> — projetos</p>
-        <h2 class="titulo-secao">Cada um resolve um <em>problema que eu tive</em>.</h2>
+        <h2 class="titulo-secao">Um pouco dos <em>meus projetos</em>.</h2>
         <div class="risco" aria-hidden="true"></div>
       </div>
 
@@ -1707,57 +2347,79 @@ section {
       -->
       <div class="filtros" id="filtros" role="group" aria-label="Filtrar projetos por categoria">
         <button class="filtro" type="button" data-filtro="todos" aria-pressed="true">todos</button>
-        <button class="filtro" type="button" data-filtro="api" aria-pressed="false">api</button>
+        <button class="filtro" type="button" data-filtro="sistema" aria-pressed="false">sistema</button>
+        <button class="filtro" type="button" data-filtro="ia" aria-pressed="false">ia</button>
         <button class="filtro" type="button" data-filtro="ferramenta" aria-pressed="false">ferramenta</button>
-        <button class="filtro" type="button" data-filtro="seguranca" aria-pressed="false">segurança</button>
       </div>
 
       <div class="grade-projetos" id="grade-projetos">
 
         <!--
           ====================================================================
-          FALTA: os três projetos.
-          Os cartões abaixo estão em estado "reservado" de propósito — vazio
-          assumido comunica melhor que "[NOME_DO_PROJETO_1]" no ar.
+          PARA ADICIONAR UM PROJETO, copie um bloco abaixo e troque o conteúdo.
+          O data-tag precisa bater com o data-filtro de um botão lá em cima;
+          categoria nova = botão novo com a mesma string.
 
-          PARA PUBLICAR UM PROJETO, troque um bloco .reservado por este:
+          Na .desc, o problema primeiro: quem tinha, o que doía. A tecnologia
+          vem depois, na linha da .stack.
 
-          <article class="projeto revelar" data-tag="api">
-            <p class="tag">api</p>
-            <h3>NOME DO PROJETO</h3>
-            <p class="desc">O PROBLEMA em uma frase. Quem tinha, o que doía,
-               com que frequência. Não a tecnologia — ela vem na linha de baixo.</p>
-            <p class="stack"><span>C#</span><span>ASP.NET</span><span>PostgreSQL</span></p>
-            <a class="repo" href="URL_DO_REPOSITORIO" target="_blank" rel="noopener noreferrer">
-              ver repositório
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M7 17L17 7M17 7H8M17 7v9"/>
-              </svg>
-              <span class="so-leitor">de NOME DO PROJETO (abre em nova aba)</span>
-            </a>
-          </article>
-
-          Como escolher e descrever os três: MELHORIAS.md, seção 2.
+          O estilo .projeto.reservado (no CSS) continua disponível para um
+          cartão de projeto que ainda não existe — é só um <article> com
+          class="projeto reservado revelar", tag, h3 e desc, sem stack nem link.
           ====================================================================
         -->
 
-        <article class="projeto reservado revelar" data-tag="api">
-          <p class="tag">api</p>
-          <h3>&gt;_ reservado para a API</h3>
-          <p class="desc">C#/.NET com banco, autenticação e regra de negócio de verdade. Em construção.</p>
+        <article class="projeto revelar" data-tag="sistema">
+          <p class="tag">sistema</p>
+          <h3>domumERP</h3>
+          <p class="desc">Imobiliária de porte médio guarda o imóvel num sistema, o funil de
+             clientes na planilha e o contrato no Word — e ninguém sabe qual comissão já
+             saiu. O domumERP junta cadastro, CRM, contrato e financeiro num lugar só, e
+             o site público da imobiliária nasce do mesmo cadastro.</p>
+          <p class="stack"><span>Next.js</span><span>TypeScript</span><span>PostgreSQL</span><span>Prisma</span><span>Auth.js</span></p>
+          <a class="repo" href="https://github.com/Guitts8/domumERP" target="_blank" rel="noopener noreferrer">
+            ver repositório
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M17 7H8M17 7v9"/>
+            </svg>
+            <span class="so-leitor">de domumERP (abre em nova aba)</span>
+          </a>
         </article>
 
-        <article class="projeto reservado revelar" data-tag="ferramenta">
+        <article class="projeto revelar" data-tag="ia">
+          <p class="tag">ia</p>
+          <h3>FluxaAI</h3>
+          <p class="desc">Negócio pequeno precisa postar toda semana e não tem quem escreva.
+             O FluxaAI gera título, legenda e hashtag na voz da marca, agenda a publicação
+             nas redes e cobra por plano — cada cliente com o banco isolado do vizinho.</p>
+          <p class="stack"><span>Node.js</span><span>Express</span><span>SQLite</span><span>Claude API</span><span>JWT</span></p>
+          <a class="repo" href="https://github.com/Guitts8/FluxaAI" target="_blank" rel="noopener noreferrer">
+            ver repositório
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M17 7H8M17 7v9"/>
+            </svg>
+            <span class="so-leitor">de FluxaAI (abre em nova aba)</span>
+          </a>
+        </article>
+
+        <article class="projeto revelar" data-tag="ferramenta">
           <p class="tag">ferramenta</p>
-          <h3>&gt;_ reservado para a ferramenta</h3>
-          <p class="desc">Automação de uma tarefa repetitiva do helpdesk. Em construção.</p>
-        </article>
-
-        <article class="projeto reservado revelar" data-tag="seguranca">
-          <p class="tag">segurança</p>
-          <h3>&gt;_ reservado para o projeto de segurança</h3>
-          <p class="desc">Análise de log procurando padrão suspeito. Em construção.</p>
+          <h3>UmbraForge</h3>
+          <p class="desc">App de nota genérico obriga quem escreve, quem estuda e quem faz
+             matemática a caber na mesma tela. O UmbraForge troca a interface conforme o
+             tipo de trabalho e guarda tudo em Markdown no disco — sem conta, sem nuvem,
+             sem internet. Em desenvolvimento.</p>
+          <p class="stack"><span>Tauri</span><span>Rust</span><span>React</span><span>TypeScript</span><span>Tailwind</span></p>
+          <a class="repo" href="https://github.com/Guitts8/umbraforge" target="_blank" rel="noopener noreferrer">
+            ver repositório
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7M17 7H8M17 7v9"/>
+            </svg>
+            <span class="so-leitor">de UmbraForge (abre em nova aba)</span>
+          </a>
         </article>
 
       </div>
@@ -1772,7 +2434,7 @@ section {
     <div class="envolve">
       <div class="cabeca-secao revelar">
         <p class="rotulo"><b>03</b> — segurança e redes</p>
-        <h2 class="titulo-secao">Antes de proteger, <em>entender por onde passa</em>.</h2>
+        <h2 class="titulo-secao">Para proteger, <em>é preciso entender a falha</em>.</h2>
         <p class="sub-secao">
           Não me chamo de especialista em segurança — estou no começo. O que já
           tenho é o ângulo: suporte me põe todo dia diante de máquina infectada,
@@ -1790,7 +2452,7 @@ section {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
           </div>
-          <h3>o elo é a pessoa</h3>
+          <h3>Ação como causa</h3>
           <p>A maior parte do que eu vejo quebrar não quebra por falha técnica: quebra por senha repetida, link clicado com pressa e acesso que ninguém revogou quando alguém saiu.</p>
         </div>
 
@@ -1823,7 +2485,7 @@ section {
         mas só depois de usar de verdade. Item que você não sabe defender numa
         entrevista custa mais caro do que a linha a mais vale.
       -->
-      <ul class="conceitos revelar">
+      <ul class="conceitos revelar cascata">
         <li>TCP/IP</li>
         <li>DNS</li>
         <li>DHCP</li>
@@ -1840,118 +2502,171 @@ section {
   <section id="stack">
     <div class="envolve">
       <div class="cabeca-secao revelar">
-        <p class="rotulo"><b>04</b> — stack</p>
-        <h2 class="titulo-secao">Onde eu estou em <em>cada coisa</em>.</h2>
+        <p class="rotulo rotulo-duplo">
+          <span><b>04</b> — stack</span>
+          <span class="rotulo-meta">linguagens, ferramentas e infra</span>
+        </p>
+        <h2 class="titulo-secao">Tecnologias <em>que domino</em>.</h2>
         <p class="sub-secao">
-          Autoavaliação, com a régua explícita: <strong>60</strong> = resolvo sozinho
-          consultando a documentação. <strong>80</strong> = resolvo sozinho e explico
-          para outra pessoa.
+          De linguagem a banco, front e rede — o que eu uso no dia a dia para
+          construir, testar e colocar no ar.
         </p>
         <div class="risco" aria-hidden="true"></div>
       </div>
 
       <!-- O número está no texto (lido por leitor de tela); a barra é só visual. -->
 
-      <div class="grupo revelar">
-        <h3 class="grupo-titulo">back-end</h3>
-        <div class="niveis">
-          <div class="nivel">
-            <div class="nivel-topo"><span>ASP.NET Web API / REST</span><span class="valor">70</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 70%"></i></div>
-          </div>
-          <div class="nivel">
-            <div class="nivel-topo"><span>C# / .NET</span><span class="valor">65</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
-          </div>
-          <div class="nivel">
-            <div class="nivel-topo"><span>Node.js</span><span class="valor">55</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
-          </div>
-          <div class="nivel">
-            <div class="nivel-topo"><span>Java</span><span class="valor">55</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
-          </div>
-          <div class="nivel">
-            <div class="nivel-topo"><span>Python</span><span class="valor">55</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
-          </div>
-        </div>
-      </div>
+      <!--
+        O .revelar fica nas DUAS colunas, e não no .stack-duas em volta:
+        a animação usa transform, e ancestral com transform vira o bloco
+        de contenção do position:sticky dos logos — sticky pararia de grudar.
+      -->
+      <div class="stack-duas">
 
-      <div class="grupo revelar">
-        <h3 class="grupo-titulo">dados</h3>
-        <div class="niveis">
-          <div class="nivel">
-            <div class="nivel-topo"><span>SQL / PostgreSQL</span><span class="valor">75</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 75%"></i></div>
-          </div>
-          <div class="nivel">
-            <div class="nivel-topo"><span>SQL Server</span><span class="valor">65</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
-          </div>
-        </div>
-      </div>
+        <div class="stack-barras revelar">
+          <p class="nota-regua">
+            Nível de domínio autoavaliado em cada tecnologia (não é tempo de uso
+            nem certificação). A régua: <strong>60</strong> = resolvo sozinho
+            consultando a documentação. <strong>80</strong> = resolvo sozinho e
+            explico para outra pessoa.
+          </p>
 
-      <div class="grupo revelar">
-        <h3 class="grupo-titulo">front-end</h3>
-        <div class="niveis">
+          <div class="niveis-lista">
           <div class="nivel">
-            <div class="nivel-topo"><span>HTML / CSS</span><span class="valor">65</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
-          </div>
-          <div class="nivel">
-            <div class="nivel-topo"><span>JavaScript / TypeScript</span><span class="valor">60</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 60%"></i></div>
-          </div>
-          <div class="nivel">
-            <div class="nivel-topo"><span>React / Next.js</span><span class="valor">55</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grupo revelar">
-        <h3 class="grupo-titulo">infra e redes</h3>
-        <div class="niveis">
-          <div class="nivel">
-            <div class="nivel-topo"><span>Git / GitHub</span><span class="valor">65</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
-          </div>
-          <div class="nivel">
-            <div class="nivel-topo"><span>Linux</span><span class="valor">60</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 60%"></i></div>
-          </div>
-          <div class="nivel">
-            <div class="nivel-topo"><span>Redes / TCP-IP / DNS</span><span class="valor">55</span></div>
-            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grupo revelar">
-        <h3 class="grupo-titulo">operação e segurança</h3>
-        <div class="niveis">
-          <div class="nivel">
-            <div class="nivel-topo"><span>Suporte / troubleshooting</span><span class="valor">80</span></div>
+            <div class="nivel-topo"><span class="nome">Análise / TroubleShooting</span><span class="valor">80</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 80%"></i></div>
           </div>
           <div class="nivel">
-            <div class="nivel-topo"><span>Documentação técnica</span><span class="valor">75</span></div>
+            <div class="nivel-topo"><span class="nome">Documentação técnica</span><span class="valor">75</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 75%"></i></div>
           </div>
           <div class="nivel">
-            <div class="nivel-topo"><span>Testes de API</span><span class="valor">70</span></div>
+            <div class="nivel-topo"><span class="nome">SQL / PostgreSQL</span><span class="valor">75</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 75%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">ASP.NET Web API / REST</span><span class="valor">70</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 70%"></i></div>
           </div>
           <div class="nivel">
-            <div class="nivel-topo"><span>Segurança da informação</span><span class="valor">65</span></div>
+            <div class="nivel-topo"><span class="nome">Testes de API</span><span class="valor">70</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 70%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">C# / .NET</span><span class="valor">65</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
           </div>
           <div class="nivel">
-            <div class="nivel-topo"><span>Análise de logs</span><span class="valor">60</span></div>
+            <div class="nivel-topo"><span class="nome">SQL Server</span><span class="valor">65</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">HTML / CSS</span><span class="valor">65</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">Git / GitHub</span><span class="valor">65</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">Segurança da informação</span><span class="valor">65</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">JavaScript / TypeScript</span><span class="valor">60</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 60%"></i></div>
           </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">Linux</span><span class="valor">80</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 80%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">Análise de logs</span><span class="valor">60</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 60%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">Node.js</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">Java</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">Python</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">React / Next.js</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+          <div class="nivel">
+            <div class="nivel-topo"><span class="nome">Redes / TCP-IP / DNS</span><span class="valor">55</span></div>
+            <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
+          </div>
+          </div>
         </div>
+
+        <!--
+          Grade de logos. Cada <li> define --cor apontando para um token
+          --m-* do :root; o SVG herda com fill: var(--cor). Para trocar a cor
+          de uma marca, mexa no token, nunca aqui.
+          Os desenhos vieram do Simple Icons (24x24) e, para C# e SQL Server,
+          do Devicon (128x128) -- por isso os viewBox diferentes.
+        -->
+        <div class="stack-logos revelar">
+          <ul class="grade-logos cascata">
+          <li style="--cor: var(--m-csharp)">
+            <svg viewBox="0 0 128 128" aria-hidden="true"><path d="M117.5 33.5l.3-.2c-.6-1.1-1.5-2.1-2.4-2.6L67.1 2.9c-.8-.5-1.9-.7-3.1-.7-1.2 0-2.3.3-3.1.7l-48 27.9c-1.7 1-2.9 3.5-2.9 5.4v55.7c0 1.1.2 2.3.9 3.4l-.2.1c.5.8 1.2 1.5 1.9 1.9l48.2 27.9c.8.5 1.9.7 3.1.7 1.2 0 2.3-.3 3.1-.7l48-27.9c1.7-1 2.9-3.5 2.9-5.4V36.1c.1-.8 0-1.7-.4-2.6zm-53.5 70c-21.8 0-39.5-17.7-39.5-39.5S42.2 24.5 64 24.5c14.7 0 27.5 8.1 34.3 20l-13 7.5C81.1 44.5 73.1 39.5 64 39.5c-13.5 0-24.5 11-24.5 24.5s11 24.5 24.5 24.5c9.1 0 17.1-5 21.3-12.4l12.9 7.6c-6.8 11.8-19.6 19.8-34.2 19.8zM115 62h-3.2l-.9 4h4.1v5h-5l-1.2 6h-4.9l1.2-6h-3.8l-1.2 6h-4.8l1.2-6H94v-5h3.5l.9-4H94v-5h5.3l1.2-6h4.9l-1.2 6h3.8l1.2-6h4.8l-1.2 6h2.2v5zm-12.7 4h3.8l.9-4h-3.8z"/></svg>
+            <span>C#</span>
+          </li>
+          <li style="--cor: var(--m-dotnet)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 8.77h-2.468v7.565h-1.425V8.77h-2.462V7.53H24zm-6.852 7.565h-4.821V7.53h4.63v1.24h-3.205v2.494h2.953v1.234h-2.953v2.604h3.396zm-6.708 0H8.882L4.78 9.863a2.896 2.896 0 0 1-.258-.51h-.036c.032.189.048.592.048 1.21v5.772H3.157V7.53h1.659l3.965 6.32c.167.261.275.442.323.54h.024c-.04-.233-.06-.629-.06-1.185V7.529h1.372zm-8.703-.693a.868.829 0 0 1-.869.829.868.829 0 0 1-.868-.83.868.829 0 0 1 .868-.828.868.829 0 0 1 .869.829Z"/></svg>
+            <span>.NET</span>
+          </li>
+          <li style="--cor: var(--m-node)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.998,24c-0.321,0-0.641-0.084-0.922-0.247l-2.936-1.737c-0.438-0.245-0.224-0.332-0.08-0.383 c0.585-0.203,0.703-0.25,1.328-0.604c0.065-0.037,0.151-0.023,0.218,0.017l2.256,1.339c0.082,0.045,0.197,0.045,0.272,0l8.795-5.076 c0.082-0.047,0.134-0.141,0.134-0.238V6.921c0-0.099-0.053-0.192-0.137-0.242l-8.791-5.072c-0.081-0.047-0.189-0.047-0.271,0 L3.075,6.68C2.99,6.729,2.936,6.825,2.936,6.921v10.15c0,0.097,0.054,0.189,0.139,0.235l2.409,1.392 c1.307,0.654,2.108-0.116,2.108-0.89V7.787c0-0.142,0.114-0.253,0.256-0.253h1.115c0.139,0,0.255,0.112,0.255,0.253v10.021 c0,1.745-0.95,2.745-2.604,2.745c-0.508,0-0.909,0-2.026-0.551L2.28,18.675c-0.57-0.329-0.922-0.945-0.922-1.604V6.921 c0-0.659,0.353-1.275,0.922-1.603l8.795-5.082c0.557-0.315,1.296-0.315,1.848,0l8.794,5.082c0.57,0.329,0.924,0.944,0.924,1.603 v10.15c0,0.659-0.354,1.273-0.924,1.604l-8.794,5.078C12.643,23.916,12.324,24,11.998,24z M19.099,13.993 c0-1.9-1.284-2.406-3.987-2.763c-2.731-0.361-3.009-0.548-3.009-1.187c0-0.528,0.235-1.233,2.258-1.233 c1.807,0,2.473,0.389,2.747,1.607c0.024,0.115,0.129,0.199,0.247,0.199h1.141c0.071,0,0.138-0.031,0.186-0.081 c0.048-0.054,0.074-0.123,0.067-0.196c-0.177-2.098-1.571-3.076-4.388-3.076c-2.508,0-4.004,1.058-4.004,2.833 c0,1.925,1.488,2.457,3.895,2.695c2.88,0.282,3.103,0.703,3.103,1.269c0,0.983-0.789,1.402-2.642,1.402 c-2.327,0-2.839-0.584-3.011-1.742c-0.02-0.124-0.126-0.215-0.253-0.215h-1.137c-0.141,0-0.254,0.112-0.254,0.253 c0,1.482,0.806,3.248,4.655,3.248C17.501,17.007,19.099,15.91,19.099,13.993z"/></svg>
+            <span>Node.js</span>
+          </li>
+          <li style="--cor: var(--m-java)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.915 0 11.7.215C9.515 2.4 7.47 6.39 6.046 10.483c-1.064 1.024-3.633 2.81-3.711 3.551-.093.87 1.746 2.611 1.55 3.235-.198.625-1.304 1.408-1.014 1.939.1.188.823.011 1.277-.491a13.389 13.389 0 0 0-.017 2.14c.076.906.27 1.668.643 2.232.372.563.956.911 1.667.911.397 0 .727-.114 1.024-.264.298-.149.571-.33.91-.5.68-.34 1.634-.666 3.53-.604 1.903.062 2.872.39 3.559.704.687.314 1.15.664 1.925.664.767 0 1.395-.336 1.807-.9.412-.563.631-1.33.72-2.24.06-.623.055-1.32 0-2.066.454.45 1.117.604 1.213.424.29-.53-.816-1.314-1.013-1.937-.198-.624 1.642-2.366 1.549-3.236-.08-.748-2.707-2.568-3.748-3.586C16.428 6.374 14.308 2.394 12.13.215zm.175 6.038a2.95 2.95 0 0 1 2.943 2.942 2.95 2.95 0 0 1-2.943 2.943A2.95 2.95 0 0 1 9.148 8.98a2.95 2.95 0 0 1 2.942-2.942zM8.685 7.983a3.515 3.515 0 0 0-.145.997c0 1.951 1.6 3.55 3.55 3.55 1.95 0 3.55-1.598 3.55-3.55 0-.329-.046-.648-.132-.951.334.095.64.208.915.336a42.699 42.699 0 0 1 2.042 5.829c.678 2.545 1.01 4.92.846 6.607-.082.844-.29 1.51-.606 1.94-.315.431-.713.651-1.315.651-.593 0-.932-.27-1.673-.61-.741-.338-1.825-.694-3.792-.758-1.974-.064-3.073.293-3.821.669-.375.188-.659.373-.911.5s-.466.2-.752.2c-.53 0-.876-.209-1.16-.64-.285-.43-.474-1.101-.545-1.948-.141-1.693.176-4.069.823-6.614a43.155 43.155 0 0 1 1.934-5.783c.348-.167.749-.31 1.192-.425zm-3.382 4.362a.216.216 0 0 1 .13.031c-.166.56-.323 1.116-.463 1.665a33.849 33.849 0 0 0-.547 2.555 3.9 3.9 0 0 0-.2-.39c-.58-1.012-.914-1.642-1.16-2.08.315-.24 1.679-1.755 2.24-1.781zm13.394.01c.562.027 1.926 1.543 2.24 1.783-.246.438-.58 1.068-1.16 2.08a4.428 4.428 0 0 0-.163.309 32.354 32.354 0 0 0-.562-2.49 40.579 40.579 0 0 0-.482-1.652.216.216 0 0 1 .127-.03z"/></svg>
+            <span>Java</span>
+          </li>
+          <li style="--cor: var(--m-python)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z"/></svg>
+            <span>Python</span>
+          </li>
+          <li style="--cor: var(--m-postgres)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5594 14.7228a.5269.5269 0 0 0-.0563-.1191c-.139-.2632-.4768-.3418-1.0074-.2321-1.6533.3411-2.2935.1312-2.5256-.0191 1.342-2.0482 2.445-4.522 3.0411-6.8297.2714-1.0507.7982-3.5237.1222-4.7316a1.5641 1.5641 0 0 0-.1509-.235C21.6931.9086 19.8007.0248 17.5099.0005c-1.4947-.0158-2.7705.3461-3.1161.4794a9.449 9.449 0 0 0-.5159-.0816 8.044 8.044 0 0 0-1.3114-.1278c-1.1822-.0184-2.2038.2642-3.0498.8406-.8573-.3211-4.7888-1.645-7.2219.0788C.9359 2.1526.3086 3.8733.4302 6.3043c.0409.818.5069 3.334 1.2423 5.7436.4598 1.5065.9387 2.7019 1.4334 3.582.553.9942 1.1259 1.5933 1.7143 1.7895.4474.1491 1.1327.1441 1.8581-.7279.8012-.9635 1.5903-1.8258 1.9446-2.2069.4351.2355.9064.3625 1.39.3772a.0569.0569 0 0 0 .0004.0041 11.0312 11.0312 0 0 0-.2472.3054c-.3389.4302-.4094.5197-1.5002.7443-.3102.064-1.1344.2339-1.1464.8115-.0025.1224.0329.2309.0919.3268.2269.4231.9216.6097 1.015.6331 1.3345.3335 2.5044.092 3.3714-.6787-.017 2.231.0775 4.4174.3454 5.0874.2212.5529.7618 1.9045 2.4692 1.9043.2505 0 .5263-.0291.8296-.0941 1.7819-.3821 2.5557-1.1696 2.855-2.9059.1503-.8707.4016-2.8753.5388-4.1012.0169-.0703.0357-.1207.057-.1362.0007-.0005.0697-.0471.4272.0307a.3673.3673 0 0 0 .0443.0068l.2539.0223.0149.001c.8468.0384 1.9114-.1426 2.5312-.4308.6438-.2988 1.8057-1.0323 1.5951-1.6698zM2.371 11.8765c-.7435-2.4358-1.1779-4.8851-1.2123-5.5719-.1086-2.1714.4171-3.6829 1.5623-4.4927 1.8367-1.2986 4.8398-.5408 6.108-.13-.0032.0032-.0066.0061-.0098.0094-2.0238 2.044-1.9758 5.536-1.9708 5.7495-.0002.0823.0066.1989.0162.3593.0348.5873.0996 1.6804-.0735 2.9184-.1609 1.1504.1937 2.2764.9728 3.0892.0806.0841.1648.1631.2518.2374-.3468.3714-1.1004 1.1926-1.9025 2.1576-.5677.6825-.9597.5517-1.0886.5087-.3919-.1307-.813-.5871-1.2381-1.3223-.4796-.839-.9635-2.0317-1.4155-3.5126zm6.0072 5.0871c-.1711-.0428-.3271-.1132-.4322-.1772.0889-.0394.2374-.0902.4833-.1409 1.2833-.2641 1.4815-.4506 1.9143-1.0002.0992-.126.2116-.2687.3673-.4426a.3549.3549 0 0 0 .0737-.1298c.1708-.1513.2724-.1099.4369-.0417.156.0646.3078.26.3695.4752.0291.1016.0619.2945-.0452.4444-.9043 1.2658-2.2216 1.2494-3.1676 1.0128zm2.094-3.988-.0525.141c-.133.3566-.2567.6881-.3334 1.003-.6674-.0021-1.3168-.2872-1.8105-.8024-.6279-.6551-.9131-1.5664-.7825-2.5004.1828-1.3079.1153-2.4468.079-3.0586-.005-.0857-.0095-.1607-.0122-.2199.2957-.2621 1.6659-.9962 2.6429-.7724.4459.1022.7176.4057.8305.928.5846 2.7038.0774 3.8307-.3302 4.7363-.084.1866-.1633.3629-.2311.5454zm7.3637 4.5725c-.0169.1768-.0358.376-.0618.5959l-.146.4383a.3547.3547 0 0 0-.0182.1077c-.0059.4747-.054.6489-.115.8693-.0634.2292-.1353.4891-.1794 1.0575-.11 1.4143-.8782 2.2267-2.4172 2.5565-1.5155.3251-1.7843-.4968-2.0212-1.2217a6.5824 6.5824 0 0 0-.0769-.2266c-.2154-.5858-.1911-1.4119-.1574-2.5551.0165-.5612-.0249-1.9013-.3302-2.6462.0044-.2932.0106-.5909.019-.8918a.3529.3529 0 0 0-.0153-.1126 1.4927 1.4927 0 0 0-.0439-.208c-.1226-.4283-.4213-.7866-.7797-.9351-.1424-.059-.4038-.1672-.7178-.0869.067-.276.1831-.5875.309-.9249l.0529-.142c.0595-.16.134-.3257.213-.5012.4265-.9476 1.0106-2.2453.3766-5.1772-.2374-1.0981-1.0304-1.6343-2.2324-1.5098-.7207.0746-1.3799.3654-1.7088.5321a5.6716 5.6716 0 0 0-.1958.1041c.0918-1.1064.4386-3.1741 1.7357-4.4823a4.0306 4.0306 0 0 1 .3033-.276.3532.3532 0 0 0 .1447-.0644c.7524-.5706 1.6945-.8506 2.802-.8325.4091.0067.8017.0339 1.1742.081 1.939.3544 3.2439 1.4468 4.0359 2.3827.8143.9623 1.2552 1.9315 1.4312 2.4543-1.3232-.1346-2.2234.1268-2.6797.779-.9926 1.4189.543 4.1729 1.2811 5.4964.1353.2426.2522.4522.2889.5413.2403.5825.5515.9713.7787 1.2552.0696.087.1372.1714.1885.245-.4008.1155-1.1208.3825-1.0552 1.717-.0123.1563-.0423.4469-.0834.8148-.0461.2077-.0702.4603-.0994.7662zm.8905-1.6211c-.0405-.8316.2691-.9185.5967-1.0105a2.8566 2.8566 0 0 0 .135-.0406 1.202 1.202 0 0 0 .1342.103c.5703.3765 1.5823.4213 3.0068.1344-.2016.1769-.5189.3994-.9533.6011-.4098.1903-1.0957.333-1.7473.3636-.7197.0336-1.0859-.0807-1.1721-.151zm.5695-9.2712c-.0059.3508-.0542.6692-.1054 1.0017-.055.3576-.112.7274-.1264 1.1762-.0142.4368.0404.8909.0932 1.3301.1066.887.216 1.8003-.2075 2.7014a3.5272 3.5272 0 0 1-.1876-.3856c-.0527-.1276-.1669-.3326-.3251-.6162-.6156-1.1041-2.0574-3.6896-1.3193-4.7446.3795-.5427 1.3408-.5661 2.1781-.463zm.2284 7.0137a12.3762 12.3762 0 0 0-.0853-.1074l-.0355-.0444c.7262-1.1995.5842-2.3862.4578-3.4385-.0519-.4318-.1009-.8396-.0885-1.2226.0129-.4061.0666-.7543.1185-1.0911.0639-.415.1288-.8443.1109-1.3505.0134-.0531.0188-.1158.0118-.1902-.0457-.4855-.5999-1.938-1.7294-3.253-.6076-.7073-1.4896-1.4972-2.6889-2.0395.5251-.1066 1.2328-.2035 2.0244-.1859 2.0515.0456 3.6746.8135 4.8242 2.2824a.908.908 0 0 1 .0667.1002c.7231 1.3556-.2762 6.2751-2.9867 10.5405zm-8.8166-6.1162c-.025.1794-.3089.4225-.6211.4225a.5821.5821 0 0 1-.0809-.0056c-.1873-.026-.3765-.144-.5059-.3156-.0458-.0605-.1203-.178-.1055-.2844.0055-.0401.0261-.0985.0925-.1488.1182-.0894.3518-.1226.6096-.0867.3163.0441.6426.1938.6113.4186zm7.9305-.4114c.0111.0792-.049.201-.1531.3102-.0683.0717-.212.1961-.4079.2232a.5456.5456 0 0 1-.075.0052c-.2935 0-.5414-.2344-.5607-.3717-.024-.1765.2641-.3106.5611-.352.297-.0414.6111.0088.6356.1851z"/></svg>
+            <span>PostgreSQL</span>
+          </li>
+          <li style="--cor: var(--m-sqlserver)">
+            <svg viewBox="0 0 128 128" aria-hidden="true"><path d="M52.935 0v.002c-.426-.058-7.306 2.42-11.742 4.223-5.988 2.44-10.636 4.766-13.504 6.78-.926.657-2.054 1.75-2.475 2.37l-.007-.021a1.424 1.424 0 0 0-.069.148c-.022.04-.052.086-.066.12a1.812 1.812 0 0 0-.115.66l.064.06c.017.207.065.44.168.695.252.62.988 1.376 1.822 2.15 0 0 8.621 8.409 9.668 9.61 4.766 5.503 6.84 10.927 7.034 18.406.117 4.805-.796 9.03-3.063 13.932-4.03 8.796-12.535 18.504-25.652 29.276l.199-.067c-.09.072-.208.174-.295.242-1.57 1.24-3.896 3.565-5.078 5.038-1.764 2.209-3.157 4.553-3.758 6.355-1.066 3.255-.543 6.548 1.51 9.59 2.636 3.875 7.887 7.83 14.01 10.521 3.12 1.377 8.368 3.14 12.322 4.127 6.567 1.667 19.28 3.469 26.273 3.739 1.414.059 3.312.059 3.39 0 .155-.097 1.241-2.168 2.501-4.744 4.3-8.778 7.399-17.013 9.086-24.047 1.007-4.262 1.801-9.94 2.324-16.663.136-1.88.194-8.177.078-10.308-.175-3.487-.483-6.316-.968-9.086a4.17 4.17 0 0 1-.07-.573c15.578-4.628 32.768-8.821 44.187-10.568l1.764-.271-.272-.428c-1.55-2.403-2.615-3.894-3.894-5.483-3.72-4.61-8.233-8.349-13.756-11.449-7.595-4.244-17.419-7.557-29.858-10.018-2.344-.465-7.495-1.357-11.68-1.996l-.39-.699c-2.287-4.03-4.805-9.027-6.278-12.398-1.142-2.616-2.228-5.639-2.828-7.809C53.187.098 53.15.02 52.935 0Zm-.31.988h.02c.018.02.095.564.173 1.203.33 2.712.931 5.328 1.881 8.157.716 2.13.716 2.015-.117 1.763-1.976-.542-10.83-2.072-17.244-2.964-1.027-.135-1.899-.271-1.899-.291-.077-.078 4.63-2.537 6.703-3.506 2.654-1.22 9.94-4.265 10.483-4.362ZM33.947 9.67l.756.252c4.108 1.395 14.434 3.373 20.13 3.838.64.058 1.182.115 1.2.115.02.02-.52.31-1.219.639-2.75 1.376-5.775 3.061-7.867 4.36-.476.296-.912.546-1.127.648a1193.726 1193.726 0 0 1-1.932-.315l-1.824-1.787a803.536 803.536 0 0 0-7.11-6.84zm-.775.602 2.732 3.41c1.492 1.88 3.003 3.72 3.332 4.127.291.359.503.622.543.7-1.935-.337-4.006-.708-5.6-1.052-1.163-.252-3.39-.775-5.134-1.375-.18-.07-.385-.146-.58-.219v-.205c.02-1.3 1.666-3.238 4.455-5.213zm23.173 4.646c.015-.007.03-.006.04.004.077 0 .172.172.404.695.66 1.453 2.715 5.367 3.219 6.123l.064.104a1193.726 1193.726 0 0 1-10.977-1.79 2.86 2.86 0 0 1 .372-.232c2.035-1.124 4.088-2.557 5.91-4.088.445-.368.851-.715.93-.773a.097.097 0 0 1 .038-.043zm-26.138 3.275c.019-.018.329.1.736.235a50.336 50.336 0 0 0 2.81.851 142.909 142.909 0 0 0 2.557.678c1.162.29 2.132.563 2.15.563.137.136 2.094 6.394 2.753 8.797.252.91.446 1.685.427 1.685-.02.02-.234-.31-.486-.756-2.267-3.99-5.851-8.04-9.998-11.297-.542-.387-.95-.736-.95-.756zm9.513 2.618c0 .038 0 .02.02.02.098 0 .524.057 1.047.173 3.293.736 9.203 1.86 12.98 2.5.64.097 1.143.214 1.143.252 0 .04-.23.175-.522.33-.64.33-3.217 1.86-4.07 2.44-2.15 1.435-4.087 2.983-5.482 4.378a79.99 79.99 0 0 1-1.047 1.028s-.115-.33-.213-.737c-.697-2.694-2.15-6.684-3.469-9.494-.213-.445-.387-.852-.387-.89zm16.8 3.215c.115.04.31.699.697 2.152a31.732 31.732 0 0 1 .93 8.873c-.04.814-.079 1.57-.118 1.668l-.057.191-1.007-.33c-2.073-.658-5.444-1.645-8.33-2.459-1.648-.446-2.985-.852-2.985-.89 0-.117 2.403-2.52 3.43-3.43 1.956-1.725 7.264-5.832 7.44-5.775zm1.335.195c.058-.058 8.024 1.316 11.647 2.014 2.694.523 6.607 1.338 6.84 1.435.115.04-.291.269-1.59.852-5.115 2.305-8.914 4.38-12.692 6.898-.988.66-1.822 1.201-1.84 1.201-.02 0-.039-.562-.039-1.24 0-3.681-.734-7.401-2.091-10.54-.136-.31-.254-.601-.235-.62zm20.596 4.068c.058.057-.193 1.629-.426 2.559-.698 2.887-2.576 7.17-4.88 11.2-.409.716-.778 1.297-.817 1.316-.038.02-.558-.273-1.16-.622-2.247-1.318-4.806-2.555-7.596-3.718-.775-.33-1.454-.601-1.473-.641-.136-.115 6.104-4.242 9.397-6.219 2.617-1.589 6.879-3.952 6.955-3.875zm1.475.233c.174 0 3.7.968 5.54 1.511 4.554 1.356 9.784 3.275 13.194 4.825l1.414.638-.986.233c-8.33 1.918-15.463 4.129-22.342 6.918-.562.233-1.066.425-1.104.425-.039 0 .157-.444.409-.986 2.073-4.399 3.408-8.991 3.738-12.906.019-.368.079-.658.137-.658zm-35.11 8.06c.058-.058 2.751.582 4.205.989 2.21.62 6.899 2.19 6.899 2.304 0 .02-.525.466-1.145 1.008-2.538 2.112-4.98 4.341-7.906 7.17-.871.833-1.606 1.51-1.645 1.51-.04 0-.059-.115-.04-.27.445-3.255.35-7.44-.27-11.683-.06-.543-.117-1.009-.098-1.028zm56.596.059c.038.039-1.24 2.052-2.055 3.195-1.162 1.667-2.867 3.877-6.722 8.72a1289.46 1289.46 0 0 0-5.076 6.413c-.775.969-1.415 1.783-1.436 1.783-.018 0-.27-.35-.541-.775-2.17-3.256-4.767-6.103-7.848-8.66a44.534 44.534 0 0 0-1.431-1.164c-.214-.155-.39-.31-.39-.33 0-.057 3.294-1.472 5.794-2.479 4.38-1.783 10.345-3.913 14.822-5.29 2.344-.735 4.844-1.452 4.883-1.413zm1.492.387c.077-.02.543.214 1.104.543 4.709 2.693 9.32 6.162 12.963 9.726 1.027 1.008 3.564 3.641 3.525 3.66 0 0-.891.08-1.937.157-8.157.62-18.6 2.343-28.635 4.765-.68.155-1.28.291-1.319.291-.038 0 .716-.756 1.666-1.666 5.89-5.677 8.583-9.261 11.76-15.656.446-.948.834-1.762.873-1.82zm-43.148 4.418c.27.058 2.788 1.239 4.687 2.189 1.744.871 4.361 2.266 4.496 2.383.02.019-.91.503-2.054 1.066a135.033 135.033 0 0 0-10.018 5.522c-.93.562-1.704 1.027-1.723 1.027-.078 0-.058-.078.465-1.027 1.744-3.177 3.14-6.975 3.934-10.676.077-.29.155-.484.213-.484zm-2.52.464c.058.058-.6 2.442-1.008 3.74-.795 2.46-2.131 5.54-3.43 7.866-.31.542-.775 1.338-1.027 1.783l-.484.774-1.084-1.045c-1.26-1.22-2.287-1.978-3.604-2.657-.524-.27-.93-.502-.93-.54 0-.156 3.314-3.159 5.852-5.329 1.82-1.57 5.657-4.65 5.715-4.592zm15.404 6.336.95.62c2.17 1.414 4.726 3.295 6.683 4.94 1.104.91 3.235 2.83 3.662 3.294l.233.252-1.57.447c-8.874 2.46-15.733 4.649-23.735 7.594-.892.33-1.647.6-1.705.6-.116 0-.213.096 1.783-1.745 5.115-4.707 9.65-9.898 13.022-14.955zm-4.05 1.008c.04.04-2.614 3.777-4.203 5.889-1.9 2.519-5.272 6.743-7.598 9.494-.968 1.144-1.8 2.092-1.84 2.111-.058.02-.078-.27-.078-.716 0-2.344-.599-4.844-1.645-6.975-.446-.891-.523-1.104-.425-1.201.368-.33 6.004-3.545 9.568-5.463 2.404-1.28 6.163-3.177 6.22-3.139zM44.1 55.26c.057 0 .502.233 1.007.504a21.28 21.28 0 0 1 3.332 2.248c.04.038-.464.446-1.123.93-1.84 1.317-4.63 3.43-6.258 4.728-1.705 1.356-1.763 1.394-1.57 1.104 1.28-1.957 1.92-3.062 2.598-4.477a36.066 36.066 0 0 0 1.627-4.05c.155-.56.347-.987.386-.987zm6.53 5.113c.097-.018.213.157.735.932 1.104 1.647 1.957 3.857 2.17 5.639l.039.386-2.654 1.028c-4.747 1.84-9.126 3.662-12.09 5.02a217.067 217.067 0 0 0-3.237 1.548c-.95.484-1.724.853-1.724.834 0-.02.6-.465 1.336-1.008 5.794-4.204 10.813-8.816 14.572-13.427.407-.484.775-.93.813-.95zm-3.003.737v.002c.078.077-2.132 2.576-3.643 4.107-3.74 3.816-7.441 6.801-12.033 9.707-.582.368-1.104.697-1.162.735-.135.078.038-.116 2.054-2.305a52.694 52.694 0 0 0 3.352-3.97c.736-.95.871-1.086 1.937-1.84 2.85-2.056 9.418-6.513 9.495-6.436zm25.974 2.3c.274 1.057.78 6.126.918 9.481.04.795.019 1.318-.021 1.318-.154 0-3.273-1.84-5.5-3.236-1.93-1.215-5.579-3.634-6.18-4.113a358.495 358.495 0 0 1 10.783-3.45zm-12.867 4.192c.254.11.635.32 1.404.795 3.991 2.5 9.418 5.522 11.743 6.53.716.31.793.193-.854 1.318-3.526 2.402-7.924 4.765-13.31 7.148-.95.426-1.745.756-1.764.756-.04 0 .077-.486.232-1.067 1.297-4.825 2.036-9.705 2.075-13.619.01-.977.014-1.46.039-1.707l.435-.154zm-2.965 1.055c.094.476.021 4.368-.127 5.494a49.361 49.361 0 0 1-1.78 8.428c-.214.717-.41 1.319-.448 1.357-.078.097-2.732-2.5-3.604-3.508-1.51-1.744-2.692-3.486-3.564-5.191-.404-.79-.987-2.205-1.055-2.518a345.346 345.346 0 0 1 8.592-3.355c.617-.232 1.343-.473 1.986-.707zm-12.603 4.9c.047.069.163.327.271.652.62 1.685 2.013 4.165 3.215 5.754 1.318 1.744 3.043 3.605 4.477 4.825.465.387.89.756.949.814.116.117.155.097-3.004 1.299-3.66 1.395-7.652 2.79-12.225 4.262a609.84 609.84 0 0 0-3.275 1.066c-.175.058-.114-.04.389-.834 2.267-3.544 5.714-10.5 7.652-15.422.33-.853.659-1.706.717-1.9.027-.095.066-.15.103-.211l.73-.305zm-4.01 1.7c-.132.39-.973 2.151-1.842 3.853-1.88 3.663-3.933 7.267-6.684 11.646-.466.755-.91 1.453-.97 1.53-.096.136-.135.098-.446-.502-.659-1.3-1.2-2.965-1.492-4.496-.29-1.511-.232-4.146.098-5.774.15-.717.216-.987.36-1.16a225.041 225.041 0 0 1 10.976-5.098zm33.479 1.2v.813c0 4.321-.465 10.25-1.143 14.57-.116.756-.213 1.377-.232 1.397 0 0-.563-.156-1.221-.35a49.985 49.985 0 0 1-8.912-3.816c-1.88-1.027-4.61-2.714-4.533-2.791.019-.02.832-.445 1.78-.95 3.799-1.975 7.441-4.107 10.6-6.22 1.182-.794 2.963-2.071 3.35-2.42zm-48.048 5.737c.074.004.052.163-.062.851a27.507 27.507 0 0 0-.213 2.07c-.155 2.83.31 4.925 1.705 7.792.388.794.698 1.453.678 1.472-.135.117-12.962 3.875-16.992 4.979-1.201.33-2.247.62-2.325.639-.136.04-.155.021-.097-.309.446-2.848 2.617-6.568 5.64-9.707 2.014-2.093 3.622-3.314 6.373-4.883.921-.524 2.066-1.163 3.057-1.71.737-.401 1.484-.799 2.236-1.194zm30.221 5.404h.002c.02-.02.483.232 1.045.56 4.147 2.404 9.921 4.633 14.842 5.776l.445.096-.619.35c-2.576 1.433-11.045 4.96-19.705 8.195-1.26.465-2.498.93-2.73 1.027-.233.097-.448.155-.448.135 0-.02.35-.698.795-1.531 2.422-4.534 4.863-10.055 6.104-13.891.155-.368.25-.697.27-.717zm-3.08 1.006h.002c.02.02-.136.428-.33.893-1.686 4.088-3.895 8.545-6.724 13.543-.716 1.28-1.317 2.306-1.336 2.306-.02 0-.601-.35-1.3-.775-4.106-2.52-7.75-5.62-10.132-8.623l-.35-.426 1.764-.484c6.316-1.724 11.684-3.584 17.012-5.87.756-.31 1.375-.564 1.394-.564zm19.143 6.686c.02.446-.967 4.437-1.781 7.324-.678 2.422-1.26 4.32-2.327 7.672-.464 1.474-.87 2.693-.89 2.693-.02 0-.135-.018-.252-.056-5.754-1.047-10.908-2.501-15.752-4.438-1.356-.543-3.293-1.415-3.41-1.512-.038-.039 1.124-.581 2.597-1.22 8.816-3.856 17.96-8.235 21.1-10.114.368-.233.657-.35.715-.35zM28.677 96.8c.04.04-2.423 3.585-5.87 8.41-1.203 1.686-2.597 3.661-3.12 4.397a77.468 77.468 0 0 0-1.764 2.596l-.814 1.261-.871-.738c-1.027-.853-2.809-2.673-3.604-3.68-1.666-2.073-2.791-4.264-3.236-6.26-.214-.93-.214-1.394-.02-1.45a1459.308 1459.308 0 0 1 10.31-2.424 861.655 861.655 0 0 0 6.935-1.627c1.124-.271 2.035-.485 2.054-.485zm2.479.95.621.697c2.79 3.12 5.637 5.425 9.086 7.44.62.35 1.086.659 1.047.679-.135.096-11.974 4.3-17.457 6.2a462.503 462.503 0 0 1-5.639 1.956c-.019 0-.194-.117-.387-.252l-.35-.252.563-.814c1.82-2.635 4.107-5.521 9.086-11.528zm15.463 11.062c.019-.02.87.29 1.918.68 2.519.949 4.513 1.55 7.187 2.228 3.294.833 8.061 1.646 10.872 1.88.426.037.657.076.58.134-.136.077-2.985 1.028-5.077 1.686-3.333 1.047-13.504 4.05-21.797 6.433a218.736 218.736 0 0 1-2.925.834c-.194.038-.834-.138-.834-.215 0-.038.465-.638 1.027-1.297 2.79-3.333 5.561-7.054 7.867-10.58.64-.969 1.182-1.764 1.182-1.783zm-3.412.098h.002c.019.02-1.357 2.227-3.76 6.025-1.026 1.608-2.17 3.432-2.576 4.07-.388.62-.971 1.59-1.3 2.131l-.56.987-.29-.076c-.699-.195-5.601-1.919-6.9-2.442a48.226 48.226 0 0 1-4.513-2.072c-1.55-.834-3.487-2.074-3.332-2.113.038-.02 2.692-.736 5.889-1.608 8.485-2.306 13.194-3.642 16.275-4.611.562-.175 1.046-.311 1.065-.291zm24.123 5.656h.021c.077.195-3.063 8.913-4.207 11.664-.25.62-.348.776-.484.756-.33-.02-4.881-.657-7.652-1.064-4.824-.736-12.925-2.15-14.958-2.616l-.464-.097 2.886-.659c6.2-1.395 9.184-2.15 12.207-3.08a86.251 86.251 0 0 0 11.413-4.4c.6-.27 1.102-.483 1.238-.502z"/></svg>
+            <span>SQL Server</span>
+          </li>
+          <li style="--cor: var(--m-js)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M0 0h24v24H0V0zm22.034 18.276c-.175-1.095-.888-2.015-3.003-2.873-.736-.345-1.554-.585-1.797-1.14-.091-.33-.105-.51-.046-.705.15-.646.915-.84 1.515-.66.39.12.75.42.976.9 1.034-.676 1.034-.676 1.755-1.125-.27-.42-.404-.601-.586-.78-.63-.705-1.469-1.065-2.834-1.034l-.705.089c-.676.165-1.32.525-1.71 1.005-1.14 1.291-.811 3.541.569 4.471 1.365 1.02 3.361 1.244 3.616 2.205.24 1.17-.87 1.545-1.966 1.41-.811-.18-1.26-.586-1.755-1.336l-1.83 1.051c.21.48.45.689.81 1.109 1.74 1.756 6.09 1.666 6.871-1.004.029-.09.24-.705.074-1.65l.046.067zm-8.983-7.245h-2.248c0 1.938-.009 3.864-.009 5.805 0 1.232.063 2.363-.138 2.711-.33.689-1.18.601-1.566.48-.396-.196-.597-.466-.83-.855-.063-.105-.11-.196-.127-.196l-1.825 1.125c.305.63.75 1.172 1.324 1.517.855.51 2.004.675 3.207.405.783-.226 1.458-.691 1.811-1.411.51-.93.402-2.07.397-3.346.012-2.054 0-4.109 0-6.179l.004-.056z"/></svg>
+            <span>JavaScript</span>
+          </li>
+          <li style="--cor: var(--m-ts)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.125 0C.502 0 0 .502 0 1.125v21.75C0 23.498.502 24 1.125 24h21.75c.623 0 1.125-.502 1.125-1.125V1.125C24 .502 23.498 0 22.875 0zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.717-.26 5.453 5.453 0 0 0-1.426-.2c-.3 0-.573.028-.819.086a2.1 2.1 0 0 0-.623.242c-.17.104-.3.229-.393.374a.888.888 0 0 0-.14.49c0 .196.053.373.156.529.104.156.252.304.443.444s.423.276.696.41c.273.135.582.274.926.416.47.197.892.407 1.266.628.374.222.695.473.963.753.268.279.472.598.614.957.142.359.214.776.214 1.253 0 .657-.125 1.21-.373 1.656a3.033 3.033 0 0 1-1.012 1.085 4.38 4.38 0 0 1-1.487.596c-.566.12-1.163.18-1.79.18a9.916 9.916 0 0 1-1.84-.164 5.544 5.544 0 0 1-1.512-.493v-2.63a5.033 5.033 0 0 0 3.237 1.2c.333 0 .624-.03.872-.09.249-.06.456-.144.623-.25.166-.108.29-.234.373-.38a1.023 1.023 0 0 0-.074-1.089 2.12 2.12 0 0 0-.537-.5 5.597 5.597 0 0 0-.807-.444 27.72 27.72 0 0 0-1.007-.436c-.918-.383-1.602-.852-2.053-1.405-.45-.553-.676-1.222-.676-2.005 0-.614.123-1.141.369-1.582.246-.441.58-.804 1.004-1.089a4.494 4.494 0 0 1 1.47-.629 7.536 7.536 0 0 1 1.77-.201zm-15.113.188h9.563v2.166H9.506v9.646H6.789v-9.646H3.375z"/></svg>
+            <span>TypeScript</span>
+          </li>
+          <li style="--cor: var(--m-react)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.23 12.004a2.236 2.236 0 0 1-2.235 2.236 2.236 2.236 0 0 1-2.236-2.236 2.236 2.236 0 0 1 2.235-2.236 2.236 2.236 0 0 1 2.236 2.236zm2.648-10.69c-1.346 0-3.107.96-4.888 2.622-1.78-1.653-3.542-2.602-4.887-2.602-.41 0-.783.093-1.106.278-1.375.793-1.683 3.264-.973 6.365C1.98 8.917 0 10.42 0 12.004c0 1.59 1.99 3.097 5.043 4.03-.704 3.113-.39 5.588.988 6.38.32.187.69.275 1.102.275 1.345 0 3.107-.96 4.888-2.624 1.78 1.654 3.542 2.603 4.887 2.603.41 0 .783-.09 1.106-.275 1.374-.792 1.683-3.263.973-6.365C22.02 15.096 24 13.59 24 12.004c0-1.59-1.99-3.097-5.043-4.032.704-3.11.39-5.587-.988-6.38-.318-.184-.688-.277-1.092-.278zm-.005 1.09v.006c.225 0 .406.044.558.127.666.382.955 1.835.73 3.704-.054.46-.142.945-.25 1.44-.96-.236-2.006-.417-3.107-.534-.66-.905-1.345-1.727-2.035-2.447 1.592-1.48 3.087-2.292 4.105-2.295zm-9.77.02c1.012 0 2.514.808 4.11 2.28-.686.72-1.37 1.537-2.02 2.442-1.107.117-2.154.298-3.113.538-.112-.49-.195-.964-.254-1.42-.23-1.868.054-3.32.714-3.707.19-.09.4-.127.563-.132zm4.882 3.05c.455.468.91.992 1.36 1.564-.44-.02-.89-.034-1.345-.034-.46 0-.915.01-1.36.034.44-.572.895-1.096 1.345-1.565zM12 8.1c.74 0 1.477.034 2.202.093.406.582.802 1.203 1.183 1.86.372.64.71 1.29 1.018 1.946-.308.655-.646 1.31-1.013 1.95-.38.66-.773 1.288-1.18 1.87-.728.063-1.466.098-2.21.098-.74 0-1.477-.035-2.202-.093-.406-.582-.802-1.204-1.183-1.86-.372-.64-.71-1.29-1.018-1.946.303-.657.646-1.313 1.013-1.954.38-.66.773-1.286 1.18-1.868.728-.064 1.466-.098 2.21-.098zm-3.635.254c-.24.377-.48.763-.704 1.16-.225.39-.435.782-.635 1.174-.265-.656-.49-1.31-.676-1.947.64-.15 1.315-.283 2.015-.386zm7.26 0c.695.103 1.365.23 2.006.387-.18.632-.405 1.282-.66 1.933-.2-.39-.41-.783-.64-1.174-.225-.392-.465-.774-.705-1.146zm3.063.675c.484.15.944.317 1.375.498 1.732.74 2.852 1.708 2.852 2.476-.005.768-1.125 1.74-2.857 2.475-.42.18-.88.342-1.355.493-.28-.958-.646-1.956-1.1-2.98.45-1.017.81-2.01 1.085-2.964zm-13.395.004c.278.96.645 1.957 1.1 2.98-.45 1.017-.812 2.01-1.086 2.964-.484-.15-.944-.318-1.37-.5-1.732-.737-2.852-1.706-2.852-2.474 0-.768 1.12-1.742 2.852-2.476.42-.18.88-.342 1.356-.494zm11.678 4.28c.265.657.49 1.312.676 1.948-.64.157-1.316.29-2.016.39.24-.375.48-.762.705-1.158.225-.39.435-.788.636-1.18zm-9.945.02c.2.392.41.783.64 1.175.23.39.465.772.705 1.143-.695-.102-1.365-.23-2.006-.386.18-.63.406-1.282.66-1.933zM17.92 16.32c.112.493.2.968.254 1.423.23 1.868-.054 3.32-.714 3.708-.147.09-.338.128-.563.128-1.012 0-2.514-.807-4.11-2.28.686-.72 1.37-1.536 2.02-2.44 1.107-.118 2.154-.3 3.113-.54zm-11.83.01c.96.234 2.006.415 3.107.532.66.905 1.345 1.727 2.035 2.446-1.595 1.483-3.092 2.295-4.11 2.295-.22-.005-.406-.05-.553-.132-.666-.38-.955-1.834-.73-3.703.054-.46.142-.944.25-1.438zm4.56.64c.44.02.89.034 1.345.034.46 0 .915-.01 1.36-.034-.44.572-.895 1.095-1.345 1.565-.455-.47-.91-.993-1.36-1.565z"/></svg>
+            <span>React</span>
+          </li>
+          <li style="--cor: var(--m-git)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.546 10.93L13.067.452c-.604-.603-1.582-.603-2.188 0L8.708 2.627l2.76 2.76c.645-.215 1.379-.07 1.889.441.516.515.658 1.258.438 1.9l2.658 2.66c.645-.223 1.387-.078 1.9.435.721.72.721 1.884 0 2.604-.719.719-1.881.719-2.6 0-.539-.541-.674-1.337-.404-1.996L12.86 8.955v6.525c.176.086.342.203.488.348.713.721.713 1.883 0 2.6-.719.721-1.889.721-2.609 0-.719-.719-.719-1.879 0-2.598.182-.18.387-.316.605-.406V8.835c-.217-.091-.424-.222-.6-.401-.545-.545-.676-1.342-.396-2.009L7.636 3.7.45 10.881c-.6.605-.6 1.584 0 2.189l10.48 10.477c.604.604 1.582.604 2.186 0l10.43-10.43c.605-.603.605-1.582 0-2.187"/></svg>
+            <span>Git</span>
+          </li>
+          <li style="--cor: var(--m-linux)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 00-.205.334 1.18 1.18 0 00-.09.4v.019c.002.089.008.179.02.267-.193-.067-.438-.135-.607-.202a1.635 1.635 0 01-.018-.2v-.02a1.772 1.772 0 01.15-.768c.082-.22.232-.406.43-.533a.985.985 0 01.594-.2zm-2.962.059h.036c.142 0 .27.048.399.135.146.129.264.288.344.465.09.199.14.4.153.667v.004c.007.134.006.2-.002.266v.08c-.03.007-.056.018-.083.024-.152.055-.274.135-.393.2.012-.09.013-.18.003-.267v-.015c-.012-.133-.04-.2-.082-.333a.613.613 0 00-.166-.267.248.248 0 00-.183-.064h-.021c-.071.006-.13.04-.186.132a.552.552 0 00-.12.27.944.944 0 00-.023.33v.015c.012.135.037.2.08.334.046.134.098.2.166.268.01.009.02.018.034.024-.07.057-.117.07-.176.136a.304.304 0 01-.131.068 2.62 2.62 0 01-.275-.402 1.772 1.772 0 01-.155-.667 1.759 1.759 0 01.08-.668 1.43 1.43 0 01.283-.535c.128-.133.26-.2.418-.2zm1.37 1.706c.332 0 .733.065 1.216.399.293.2.523.269 1.052.468h.003c.255.136.405.266.478.399v-.131a.571.571 0 01.016.47c-.123.31-.516.643-1.063.842v.002c-.268.135-.501.333-.775.465-.276.135-.588.292-1.012.267a1.139 1.139 0 01-.448-.067 3.566 3.566 0 01-.322-.198c-.195-.135-.363-.332-.612-.465v-.005h-.005c-.4-.246-.616-.512-.686-.71-.07-.268-.005-.47.193-.6.224-.135.38-.271.483-.336.104-.074.143-.102.176-.131h.002v-.003c.169-.202.436-.47.839-.601.139-.036.294-.065.466-.065zm2.8 2.142c.358 1.417 1.196 3.475 1.735 4.473.286.534.855 1.659 1.102 3.024.156-.005.33.018.513.064.646-1.671-.546-3.467-1.089-3.966-.22-.2-.232-.335-.123-.335.59.534 1.365 1.572 1.646 2.757.13.535.16 1.104.021 1.67.067.028.135.06.205.067 1.032.534 1.413.938 1.23 1.537v-.043c-.06-.003-.12 0-.18 0h-.016c.151-.467-.182-.825-1.065-1.224-.915-.4-1.646-.336-1.77.465-.008.043-.013.066-.018.135-.068.023-.139.053-.209.064-.43.268-.662.669-.793 1.187-.13.533-.17 1.156-.205 1.869v.003c-.02.334-.17.838-.319 1.35-1.5 1.072-3.58 1.538-5.348.334a2.645 2.645 0 00-.402-.533 1.45 1.45 0 00-.275-.333c.182 0 .338-.03.465-.067a.615.615 0 00.314-.334c.108-.267 0-.697-.345-1.163-.345-.467-.931-.995-1.788-1.521-.63-.4-.986-.87-1.15-1.396-.165-.534-.143-1.085-.015-1.645.245-1.07.873-2.11 1.274-2.763.107-.065.037.135-.408.974-.396.751-1.14 2.497-.122 3.854a8.123 8.123 0 01.647-2.876c.564-1.278 1.743-3.504 1.836-5.268.048.036.217.135.289.202.218.133.38.333.59.465.21.201.477.335.876.335.039.003.075.006.11.006.412 0 .73-.134.997-.268.29-.134.52-.334.74-.4h.005c.467-.135.835-.402 1.044-.7zm2.185 8.958c.037.6.343 1.245.882 1.377.588.134 1.434-.333 1.791-.765l.211-.01c.315-.007.577.01.847.268l.003.003c.208.199.305.53.391.876.085.4.154.78.409 1.066.486.527.645.906.636 1.14l.003-.007v.018l-.003-.012c-.015.262-.185.396-.498.595-.63.401-1.746.712-2.457 1.57-.618.737-1.37 1.14-2.036 1.191-.664.053-1.237-.2-1.574-.898l-.005-.003c-.21-.4-.12-1.025.056-1.69.176-.668.428-1.344.463-1.897.037-.714.076-1.335.195-1.814.12-.465.308-.797.641-.984l.045-.022zm-10.814.049h.01c.053 0 .105.005.157.014.376.055.706.333 1.023.752l.91 1.664.003.003c.243.533.754 1.064 1.189 1.637.434.598.77 1.131.729 1.57v.006c-.057.744-.48 1.148-1.125 1.294-.645.135-1.52.002-2.395-.464-.968-.536-2.118-.469-2.857-.602-.369-.066-.61-.2-.723-.4-.11-.2-.113-.602.123-1.23v-.004l.002-.003c.117-.334.03-.752-.027-1.118-.055-.401-.083-.71.043-.94.16-.334.396-.4.69-.533.294-.135.64-.202.915-.47h.002v-.002c.256-.268.445-.601.668-.838.19-.201.38-.336.663-.336zm7.159-9.074c-.435.201-.945.535-1.488.535-.542 0-.97-.267-1.28-.466-.154-.134-.28-.268-.373-.335-.164-.134-.144-.333-.074-.333.109.016.129.134.199.2.096.066.215.2.36.333.292.2.68.467 1.167.467.485 0 1.053-.267 1.398-.466.195-.135.445-.334.648-.467.156-.136.149-.267.279-.267.128.016.034.134-.147.332a8.097 8.097 0 01-.69.468zm-1.082-1.583V5.64c-.006-.02.013-.042.029-.05.074-.043.18-.027.26.004.063 0 .16.067.15.135-.006.049-.085.066-.135.066-.055 0-.092-.043-.141-.068-.052-.018-.146-.008-.163-.065zm-.551 0c-.02.058-.113.049-.166.066-.047.025-.086.068-.14.068-.05 0-.13-.02-.136-.068-.01-.066.088-.133.15-.133.08-.031.184-.047.259-.005.019.009.036.03.03.05v.02h.003z"/></svg>
+            <span>Linux</span>
+          </li>
+          </ul>
+        </div>
+
       </div>
 
       <div class="grupo revelar">
@@ -1972,6 +2687,7 @@ section {
           <span class="chip">CMD</span>
           <span class="chip">Docker</span>
           <span class="chip">DevTools</span>
+          <span class="chip">ADB</span>
           <span class="chip">AnyDesk</span>
           <span class="chip">RustDesk</span>
           <span class="chip">Excel</span>
@@ -2005,19 +2721,34 @@ section {
       <div class="cabeca-secao revelar">
         <p class="rotulo"><b>05</b> — trajetória</p>
         <h2 class="titulo-secao">Como eu <em>cheguei até aqui</em>.</h2>
+        <p class="sub-secao">
+          Três cargos na Supermídia em pouco mais de um ano, sempre no mesmo
+          sentido: sair da operação e chegar mais perto de onde o sistema
+          realmente roda.
+        </p>
         <div class="risco" aria-hidden="true"></div>
       </div>
 
       <ol class="linha-tempo">
         <li class="marco agora revelar">
           <p class="ano">2026 — agora</p>
-          <h3>Helpdesk júnior na Supermídia</h3>
-          <p>Atendo chamado real, leio log real e documento o que resolvi. É o primeiro lugar onde a pergunta sobre segurança deixou de ser teórica: agora ela vale para dado de gente que eu conheço.</p>
+          <h3>Analista de helpdesk júnior na Supermídia</h3>
+          <p>Instalo e configuro os sistemas Supermídia e RX direto no ambiente do cliente: requisito, serviço, conectividade, SQL Server. Em Android, uso ADB para instalar, parametrizar e depurar. Quase tudo remoto — cada cliente tem um ambiente e uma rede diferentes, e é normalmente aí que mora o problema.</p>
+        </li>
+        <li class="marco revelar">
+          <p class="ano">2025 — 2026</p>
+          <h3>Analista de suporte técnico</h3>
+          <p>Aqui o chamado parou de terminar na tela. Log, reprodução do cenário, consulta em PostgreSQL, integração suspeita — e a documentação do incidente com evidência, para produto, QA e desenvolvimento conseguirem agir. Depois, validar a correção e olhar se voltou.</p>
         </li>
         <li class="marco revelar">
           <p class="ano">2025</p>
           <h3>Segurança virou o foco</h3>
           <p>Parei de tratar segurança como assunto paralelo e comecei a estudar como um dado vaza de verdade — engenharia social, credencial reaproveitada, log que ninguém leu. A partir dali passou a ser o critério de tudo que eu construo.</p>
+        </li>
+        <li class="marco revelar">
+          <p class="ano">início de 2025</p>
+          <h3>Entrei na Supermídia</h3>
+          <p>Comecei como técnico preparador de dados, cuidando da rotina de dados que os clientes usam e caçando inconsistência. Foi onde ficou claro que o erro quase nunca começa onde o usuário está olhando.</p>
         </li>
         <li class="marco revelar">
           <p class="ano">2024</p>
@@ -2199,6 +2930,27 @@ section {
      --------------------------------------------------------------- */
   var alvos = document.querySelectorAll('.revelar');
 
+  /* Blocos que chegam na tela no mesmo quadro subiriam todos juntos, num
+     pop só — lê como página carregando de uma vez, não como cascata. Um
+     atraso incremental resolve. O teto existe para o último item de uma
+     leva grande não ficar visivelmente atrasado do primeiro. */
+  var PASSO_BLOCO = 90;   // entre blocos que chegam no mesmo quadro
+  var PASSO_BARRA = 35;   // entre as barras dentro de um mesmo bloco
+  var PASSO_FILHO = 55;   // entre os filhos de um .cascata
+  var TETO_BLOCO = 450;
+  var TETO_BARRA = 700;   // 18 barras: a cascata inteira cabe aqui
+  var TETO_FILHO = 650;
+
+  function atrasar(elemento, ms, teto) {
+    if (semMovimento || ms <= 0) return;
+    var espera = Math.min(ms, teto);
+    elemento.style.transitionDelay = espera + 'ms';
+    /* O atraso é inline, então valeria para toda transição do elemento —
+       inclusive o hover do cartão, que ficaria lerdo pelo resto da visita.
+       Some com ele depois que a revelação termina. */
+    setTimeout(function () { elemento.style.transitionDelay = ''; }, espera + 1200);
+  }
+
   function contar(elemento) {
     var destino = parseInt(elemento.dataset.num, 10);
     // placeholder ("[N]") ou valor não numérico: não anima, deixa como está
@@ -2250,12 +3002,38 @@ section {
 
   if ('IntersectionObserver' in window) {
     var observador = new IntersectionObserver(function (entradas) {
+      var vez = 0;
+
       entradas.forEach(function (entrada) {
         if (!entrada.isIntersecting) return;
-        entrada.target.classList.add('revelado');
-        entrada.target.querySelectorAll('[data-num]').forEach(contar);
-        if (entrada.target.id === 'terminal') digitar();
-        observador.unobserve(entrada.target); // revela uma vez só
+
+        var bloco = entrada.target;
+        var atraso = vez * PASSO_BLOCO;
+        vez++;
+
+        atrasar(bloco, atraso, TETO_BLOCO);
+
+        /* As 18 barras da stack vivem todas dentro de um .revelar só, então
+           encheriam no mesmo instante. */
+        bloco.querySelectorAll('.barra i').forEach(function (barra, i) {
+          atrasar(barra, i * PASSO_BARRA, TETO_BARRA);
+        });
+
+        /* Mesma ideia para os blocos marcados .cascata (logos, conceitos):
+           o container pode ser o próprio .revelar ou estar dentro dele. */
+        var cascatas = Array.prototype.slice.call(bloco.querySelectorAll('.cascata'));
+        if (bloco.classList.contains('cascata')) cascatas.unshift(bloco);
+
+        cascatas.forEach(function (container) {
+          Array.prototype.forEach.call(container.children, function (filho, i) {
+            atrasar(filho, i * PASSO_FILHO, TETO_FILHO);
+          });
+        });
+
+        bloco.classList.add('revelado');
+        bloco.querySelectorAll('[data-num]').forEach(contar);
+        if (bloco.id === 'terminal') digitar();
+        observador.unobserve(bloco); // revela uma vez só
       });
     }, {
       threshold: 0.12,
@@ -2308,6 +3086,313 @@ section {
   }, { passive: true });
 
   aoRolar();
+
+  /* ---------------------------------------------------------------
+     PONTEIRO FINO
+     Tilt e botão magnético só fazem sentido com mouse. No toque não há
+     "passar por cima": o dedo já é o clique, e o efeito só atrapalha.
+     --------------------------------------------------------------- */
+  var mouseDeVerdade = window.matchMedia('(pointer: fine)').matches;
+
+  /* ---------------------------------------------------------------
+     TELA DE BOOT
+     O visual todo é CSS (inclusive a saída). Aqui só: gravar a sessão,
+     tirar o nó do DOM e avisar o hero que pode começar.
+     --------------------------------------------------------------- */
+  var telaBoot = document.getElementById('boot');
+  var bootJaSaiu = false;
+
+  function fimDoBoot() {
+    if (bootJaSaiu) return;
+    bootJaSaiu = true;
+
+    if (telaBoot && telaBoot.parentNode) telaBoot.parentNode.removeChild(telaBoot);
+
+    try {
+      sessionStorage.setItem('boot', 'visto');
+    } catch (e) {
+      /* sessionStorage bloqueado: o boot roda de novo na próxima visita */
+    }
+
+    abrirHero();
+  }
+
+  if (!telaBoot || document.documentElement.classList.contains('sem-boot')) {
+    fimDoBoot();
+  } else {
+    /* a animação de saída é que manda; o timer é só rede de segurança
+       para o caso de animationend não disparar (aba em segundo plano) */
+    telaBoot.addEventListener('animationend', function (evento) {
+      if (evento.target === telaBoot && evento.animationName === 'boot-sai') fimDoBoot();
+    });
+    /* 2.2s de espera + .35s de saída = ~2.55s; o resto é folga.
+       Se mexer nos tempos do CSS (boot-sai e o passo das linhas),
+       suba este número junto ou o JS corta a animação no meio. */
+    setTimeout(fimDoBoot, 3400);
+
+    /* ninguém é obrigado a assistir: clique ou tecla corta na hora */
+    function pular() {
+      if (bootJaSaiu || !telaBoot) return;
+      telaBoot.classList.add('boot-pulado');
+    }
+    telaBoot.addEventListener('click', pular);
+    window.addEventListener('keydown', pular, { once: true });
+  }
+
+  /* ---------------------------------------------------------------
+     HERO: SCRAMBLE + GLITCH
+     O título nasce embaralhado e vai assentando letra a letra; quando
+     termina, um pulso de RGB-split — e depois um a cada 9s.
+     O intervalo é longo e o pulso é curto de propósito: é isso que
+     separa "detalhe" de "distração" para quem está lendo o parágrafo
+     logo abaixo do hero. Não desça dos 9s.
+     --------------------------------------------------------------- */
+  function embaralhar(raiz, duracao) {
+    var sopa = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#*&/';
+    var caminhante = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT, null, false);
+    var nos = [];
+    var no;
+    while ((no = caminhante.nextNode())) nos.push(no);
+
+    nos.forEach(function (texto) {
+      var original = texto.textContent;
+      var inicio = null;
+
+      function passo(agora) {
+        if (inicio === null) inicio = agora;
+        var t = Math.min((agora - inicio) / duracao, 1);
+        var revelados = Math.floor(t * original.length);
+        var saida = '';
+
+        for (var i = 0; i < original.length; i++) {
+          // espaço fica no lugar: sem isso a largura do título dança
+          saida += (i < revelados || original[i] === ' ')
+            ? original[i]
+            : sopa[Math.floor(Math.random() * sopa.length)];
+        }
+
+        texto.textContent = saida;
+        if (t < 1) requestAnimationFrame(passo);
+        else texto.textContent = original;
+      }
+
+      requestAnimationFrame(passo);
+    });
+  }
+
+  /* Um pulso: põe a classe, tira 520ms depois. Os 520ms cobrem os .5s dos
+     keyframes glitch-a/glitch-b/glitch-bloco — tirar antes cortaria o
+     efeito no meio, e pior: o último quadro é o que fecha a faixa e zera
+     a opacidade das cópias, então sair antes dele deixaria um bloco opaco
+     parado por cima do título. O navegador só reinicia a animação depois
+     que a classe sai, então este número é o teto da repetição também. */
+  function pulsarGlitch(titulo) {
+    var partes = titulo.querySelectorAll('.glitch');
+    if (!partes.length) return;
+
+    partes.forEach(function (p) { p.classList.add('falhando'); });
+    setTimeout(function () {
+      partes.forEach(function (p) { p.classList.remove('falhando'); });
+    }, 520);
+  }
+
+  function abrirHero() {
+    if (semMovimento) return;
+
+    var titulo = document.querySelector('.hero h1');
+    if (!titulo) return;
+
+    embaralhar(titulo, 800);
+
+    // o primeiro glitch entra depois que o texto assentou, não junto
+    setTimeout(function () { pulsarGlitch(titulo); }, 850);
+
+    /* daí em diante, um pulso a cada 9s. Com a aba escondida não há para
+       quem piscar: o navegador estrangula o timer e o pulso sairia todo
+       de uma vez na volta, então é melhor simplesmente pular a rodada. */
+    setInterval(function () {
+      if (document.hidden) return;
+      pulsarGlitch(titulo);
+    }, 9000);
+  }
+
+  /* ---------------------------------------------------------------
+     PARTÍCULAS
+     Substituíram a poeira em SVG. A cor sai do token --accent, relida
+     quando o tema troca — é por isso que não há cor nenhuma no CSS do
+     canvas. Pausa com a aba escondida, para não queimar bateria à toa.
+     --------------------------------------------------------------- */
+  (function particulas() {
+    var tela = document.getElementById('particulas');
+    if (!tela || semMovimento) return;
+
+    var ctx = tela.getContext('2d');
+    if (!ctx) return;
+
+    var pontos = [];
+    var largura = 0;
+    var altura = 0;
+    var quadro = null;
+    var rodando = false;
+    var cor = '#000';
+
+    function lerCor() {
+      cor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--accent').trim() || cor;
+    }
+
+    function dimensionar() {
+      // o dpr evita que o ponto de 1px saia borrado em tela retina
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      largura = window.innerWidth;
+      altura = window.innerHeight;
+      tela.width = Math.round(largura * dpr);
+      tela.height = Math.round(altura * dpr);
+      tela.style.width = largura + 'px';
+      tela.style.height = altura + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      var quantos = window.matchMedia('(max-width: 700px)').matches ? 20 : 42;
+      pontos = [];
+      for (var i = 0; i < quantos; i++) {
+        pontos.push({
+          x: Math.random() * largura,
+          y: Math.random() * altura,
+          r: Math.random() * 1.5 + 0.5,
+          sobe: Math.random() * 0.22 + 0.06,
+          lado: (Math.random() - 0.5) * 0.14,
+          alfa: Math.random() * 0.3 + 0.1
+        });
+      }
+    }
+
+    function tique() {
+      ctx.clearRect(0, 0, largura, altura);
+      ctx.fillStyle = cor;
+
+      pontos.forEach(function (p) {
+        p.y -= p.sobe;
+        p.x += p.lado;
+
+        // sai por cima, volta por baixo
+        if (p.y < -10) { p.y = altura + 10; p.x = Math.random() * largura; }
+        if (p.x < -10) p.x = largura + 10;
+        if (p.x > largura + 10) p.x = -10;
+
+        ctx.globalAlpha = p.alfa;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.globalAlpha = 1;
+      if (rodando) quadro = requestAnimationFrame(tique);
+    }
+
+    function ligar() {
+      if (rodando) return;
+      rodando = true;
+      quadro = requestAnimationFrame(tique);
+    }
+
+    function desligar() {
+      rodando = false;
+      if (quadro) cancelAnimationFrame(quadro);
+    }
+
+    lerCor();
+    dimensionar();
+    ligar();
+
+    window.addEventListener('resize', dimensionar);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) desligar();
+      else ligar();
+    });
+
+    /* o botão de tema só mexe no atributo do <html>; observar o atributo
+       mantém este bloco independente do bloco do tema */
+    new MutationObserver(lerCor).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
+  })();
+
+  /* ---------------------------------------------------------------
+     TILT 3D NOS CARTÕES DE PROJETO
+     A perspectiva está na grade (CSS). Aqui só a rotação e o ponto do
+     brilho, os dois vindos da posição do cursor dentro do cartão.
+     --------------------------------------------------------------- */
+  if (mouseDeVerdade && !semMovimento) {
+    document.querySelectorAll('.projeto').forEach(function (cartao) {
+      var brilho = document.createElement('div');
+      brilho.className = 'tilt-brilho';
+      cartao.appendChild(brilho);
+
+      var GRAUS = 6;
+
+      cartao.addEventListener('mousemove', function (evento) {
+        // botão pressionado: a pessoa está selecionando texto, não brincando
+        if (evento.buttons === 1) return;
+        // antes de revelar, o transform é da animação de entrada — não pisar nele
+        if (!cartao.classList.contains('revelado')) return;
+
+        var caixa = cartao.getBoundingClientRect();
+        var px = (evento.clientX - caixa.left) / caixa.width;
+        var py = (evento.clientY - caixa.top) / caixa.height;
+
+        cartao.style.transform =
+          'perspective(900px) rotateX(' + ((0.5 - py) * GRAUS * 2).toFixed(2) + 'deg)' +
+          ' rotateY(' + ((px - 0.5) * GRAUS * 2).toFixed(2) + 'deg)' +
+          ' translateY(-4px)';
+
+        cartao.style.setProperty('--mx', (px * 100).toFixed(1) + '%');
+        cartao.style.setProperty('--my', (py * 100).toFixed(1) + '%');
+      });
+
+      function soltar() { cartao.style.transform = ''; }
+      cartao.addEventListener('mouseleave', soltar);
+      cartao.addEventListener('mousedown', soltar);
+    });
+  }
+
+  /* ---------------------------------------------------------------
+     BOTÕES: ONDULAÇÃO NO CLIQUE + ATRAÇÃO PELO CURSOR
+     O deslocamento magnético é de propósito pequeno (12% na horizontal,
+     22% na vertical): passar muito disso faz o botão fugir do ponteiro,
+     e aí o efeito vira um alvo móvel em cima de um link de verdade.
+     --------------------------------------------------------------- */
+  document.querySelectorAll('.btn').forEach(function (botao) {
+    if (mouseDeVerdade && !semMovimento) {
+      botao.addEventListener('mousemove', function (evento) {
+        var caixa = botao.getBoundingClientRect();
+        var dx = evento.clientX - caixa.left - caixa.width / 2;
+        var dy = evento.clientY - caixa.top - caixa.height / 2;
+        botao.style.transform =
+          'translate(' + (dx * 0.12).toFixed(1) + 'px, ' +
+          (dy * 0.22 - 2).toFixed(1) + 'px)';
+      });
+      botao.addEventListener('mouseleave', function () {
+        botao.style.transform = '';
+      });
+    }
+
+    botao.addEventListener('click', function (evento) {
+      if (semMovimento) return;
+
+      var caixa = botao.getBoundingClientRect();
+      var lado = Math.max(caixa.width, caixa.height) * 1.6;
+      var onda = document.createElement('span');
+
+      onda.className = 'ondulacao';
+      onda.style.width = onda.style.height = lado + 'px';
+      onda.style.left = (evento.clientX - caixa.left - lado / 2) + 'px';
+      onda.style.top = (evento.clientY - caixa.top - lado / 2) + 'px';
+
+      botao.appendChild(onda);
+      onda.addEventListener('animationend', function () { onda.remove(); });
+    });
+  });
 
   /* ---------------------------------------------------------------
      ANO DO RODAPÉ

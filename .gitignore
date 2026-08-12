@@ -1,0 +1,63 @@
+# ==============================================================================
+# Este repositório é PÚBLICO e é o próprio site (Guitts8.github.io).
+# Tudo que fica aqui dentro e não está nesta lista vai para o ar com o seu
+# nome em cima. Na dúvida sobre um arquivo novo: ignore primeiro, publique
+# depois de olhar.
+# ==============================================================================
+
+# --- material interno de trabalho ---------------------------------------
+# Rascunho, formulário e notas de decisão. Servem para construir o site,
+# não fazem parte dele. O README é a única documentação que fica.
+DADOS.md
+PALETAS.md
+MELHORIAS.md
+NOTAS.md
+TODO.md
+rascunho*/
+notas*/
+
+# --- ferramentas locais -------------------------------------------------
+# Configuração da sua máquina: permissões, atalhos, preferências de editor.
+# Não descrevem o site e mudam de máquina para máquina.
+.claude/
+.vscode/
+.idea/
+*.code-workspace
+
+# --- segredos -----------------------------------------------------------
+# O site é estático e não tem back-end, então nada disso deveria existir
+# aqui. A lista é a tranca: um .env commitado por engano num repo público
+# já nasce vazado, e apagar depois não desfaz — o histórico guarda.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+segredos*
+credenciais*
+
+# --- arquivos de origem das imagens -------------------------------------
+# O que entra em assets/ é o PNG exportado e otimizado. O arquivo de
+# edição é grande, ninguém baixa e mesmo assim seria servido pelo Pages.
+*.psd
+*.xcf
+*.ai
+*.fig
+*.sketch
+assets/originais/
+
+# --- lixo de sistema operacional ----------------------------------------
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.DS_Store
+*~
+*.tmp
+*.bak
+
+# --- se alguma ferramenta aparecer por aqui ------------------------------
+# A página não tem build nem dependência, mas basta um `npm init` curioso
+# para nascer uma pasta de 200 MB no meio do site.
+node_modules/
+dist/
+.cache/
