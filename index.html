@@ -458,6 +458,36 @@ a {
   letter-spacing: .04em;
 }
 
+/* SOTAQUE DE COR POR ÁREA
+   Mesma identidade, cor de destaque diferente em cada área: software fica
+   no âmbar do :root, jogos ganham fúcsia e segurança, verde de terminal.
+   Só --accent e --accent-2 são trocados, e só dentro da seção (e nos
+   atalhos que levam até ela). Tudo o mais continua vindo do :root. */
+#jogos,
+.nav-links a[href="#jogos"],
+.sobrancelha a[href="#jogos"] {
+  --accent:   #E879F9;
+  --accent-2: #A21CAF;
+}
+#seguranca,
+.nav-links a[href="#seguranca"],
+.sobrancelha a[href="#seguranca"] {
+  --accent:   #4ADE80;
+  --accent-2: #15803D;
+}
+:root[data-theme="light"] #jogos,
+:root[data-theme="light"] .nav-links a[href="#jogos"],
+:root[data-theme="light"] .sobrancelha a[href="#jogos"] {
+  --accent:   #A21CAF;
+  --accent-2: #C026D3;
+}
+:root[data-theme="light"] #seguranca,
+:root[data-theme="light"] .nav-links a[href="#seguranca"],
+:root[data-theme="light"] .sobrancelha a[href="#seguranca"] {
+  --accent:   #166534;   /* o verde-700 ficava abaixo de AA na faixa clara */
+  --accent-2: #15803D;
+}
+
 /* Esconde o idioma inativo. Sem data-lang (antes do script) vale o inglês.
    !important só aqui: o elemento visível mantém o display que já tinha. */
 :root:not([data-lang="pt"]) [data-l="pt"],
@@ -1259,9 +1289,9 @@ section {
   font-size: var(--t-peq);
 }
 
-/* seção 03 (jogos): os grupos abaixo dos cartões */
-.jogos-grupos { margin-top: clamp(2.5rem, 6vw, 4rem); }
-.jogos-grupos .conceitos { margin-top: 0; }
+/* seções 03 e 04: os grupos (projetos, motores, conceitos) abaixo dos cartões */
+.area-grupos { margin-top: clamp(2.5rem, 6vw, 4rem); }
+.area-grupos .conceitos { margin-top: 0; }
 /* cinco logos numa fileira só no desktop; quebra sozinha no celular */
 .grade-logos.grade-motores { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
 
@@ -2550,7 +2580,7 @@ html.js .boot.boot-pulado {
     <nav aria-label="Main navigation" data-pt-aria-label="Navegação principal">
       <ul class="nav-links">
         <li><a href="#sobre"><span data-l="en">about</span><span data-l="pt">sobre</span></a></li>
-        <li><a href="#projetos"><span data-l="en">projects</span><span data-l="pt">projetos</span></a></li>
+        <li><a href="#projetos">software</a></li>
         <li><a href="#jogos"><span data-l="en">games</span><span data-l="pt">jogos</span></a></li>
         <li><a href="#seguranca"><span data-l="en">security</span><span data-l="pt">segurança</span></a></li>
         <li class="opcional"><a href="#stack">stack</a></li>
@@ -2760,7 +2790,7 @@ html.js .boot.boot-pulado {
   <section id="projetos">
     <div class="envolve">
       <div class="cabeca-secao revelar">
-        <p class="rotulo"><b>02</b> — <span data-l="en">projects</span><span data-l="pt">projetos</span></p>
+        <p class="rotulo"><b>02</b> — software</p>
         <h2 class="titulo-secao"><span data-l="en">A few of <em>my projects</em>.</span><span data-l="pt">Um pouco dos <em>meus projetos</em>.</span></h2>
         <div class="risco" aria-hidden="true"></div>
       </div>
@@ -2770,17 +2800,16 @@ html.js .boot.boot-pulado {
         Para criar uma categoria nova, use a mesma string nos dois lugares.
         Se um filtro ficar sem nenhum projeto, apague o botão dele.
 
-        Os filtros são as TRÊS ÁREAS (software, jogos, segurança): é o que o
-        recrutador de cada vaga quer achar. O tipo do projeto (sistema, ia,
-        ferramenta, protótipo...) continua escrito no .tag de cada cartão.
-        Projeto que serve a duas áreas: data-tag="software seguranca" e o
+        Esta seção é só de SOFTWARE. Projeto de jogo entra na grade da
+        seção 03 e projeto de segurança na grade da seção 04.
+        Projeto com mais de um tipo: data-tag="sistema ferramenta" e o
         filtro acha pelos dois (o JS separa por espaço).
       -->
-      <div class="filtros" id="filtros" role="group" aria-label="Filter projects by area" data-pt-aria-label="Filtrar projetos por área">
+      <div class="filtros" id="filtros" role="group" aria-label="Filter projects by type" data-pt-aria-label="Filtrar projetos por categoria">
         <button class="filtro" type="button" data-filtro="todos" aria-pressed="true"><span data-l="en">all</span><span data-l="pt">todos</span></button>
-        <button class="filtro" type="button" data-filtro="software" aria-pressed="false">software</button>
-        <button class="filtro" type="button" data-filtro="jogos" aria-pressed="false"><span data-l="en">games</span><span data-l="pt">jogos</span></button>
-        <button class="filtro" type="button" data-filtro="seguranca" aria-pressed="false"><span data-l="en">security</span><span data-l="pt">segurança</span></button>
+        <button class="filtro" type="button" data-filtro="sistema" aria-pressed="false"><span data-l="en">system</span><span data-l="pt">sistema</span></button>
+        <button class="filtro" type="button" data-filtro="ia" aria-pressed="false"><span data-l="en">ai</span><span data-l="pt">ia</span></button>
+        <button class="filtro" type="button" data-filtro="ferramenta" aria-pressed="false"><span data-l="en">tool</span><span data-l="pt">ferramenta</span></button>
       </div>
 
       <div class="grade-projetos" id="grade-projetos">
@@ -2800,7 +2829,7 @@ html.js .boot.boot-pulado {
           ====================================================================
         -->
 
-        <article class="projeto revelar" data-tag="software">
+        <article class="projeto revelar" data-tag="sistema">
           <p class="tag"><span data-l="en">system</span><span data-l="pt">sistema</span></p>
           <h3>domumERP</h3>
           <p class="desc" data-l="en">A mid-sized real estate agency keeps properties in one system, the client
@@ -2822,7 +2851,7 @@ html.js .boot.boot-pulado {
           </a>
         </article>
 
-        <article class="projeto revelar" data-tag="software">
+        <article class="projeto revelar" data-tag="ia">
           <p class="tag"><span data-l="en">ai</span><span data-l="pt">ia</span></p>
           <h3>FluxaAI</h3>
           <p class="desc" data-l="en">A small business needs to post every week and has no one to write.
@@ -2842,7 +2871,7 @@ html.js .boot.boot-pulado {
           </a>
         </article>
 
-        <article class="projeto revelar" data-tag="software">
+        <article class="projeto revelar" data-tag="ferramenta">
           <p class="tag"><span data-l="en">tool</span><span data-l="pt">ferramenta</span></p>
           <h3>UmbraForge</h3>
           <p class="desc" data-l="en">A generic notes app forces writers, students and people doing
@@ -2864,30 +2893,11 @@ html.js .boot.boot-pulado {
           </a>
         </article>
 
-        <!--
-          RESERVADOS: um por área que ainda não tem projeto publicado.
-          Quando o projeto de verdade entrar, troque o cartão reservado por
-          um <article class="projeto revelar"> completo, com stack e link.
-          Não deixe reservado por meses: cartão vazio parado vira sinal ruim.
-        -->
-        <article class="projeto reservado revelar" data-tag="jogos">
-          <p class="tag"><span data-l="en">game · in progress</span><span data-l="pt">jogo · em andamento</span></p>
-          <h3><span data-l="en">next: a playable game</span><span data-l="pt">próximo: um jogo jogável</span></h3>
-          <p class="desc" data-l="en">A small game built from start to finish, published on itch.io with its source code here.</p>
-          <p class="desc" data-l="pt">Um jogo pequeno, do início ao fim, publicado no itch.io com o código aqui.</p>
-        </article>
-
-        <article class="projeto reservado revelar" data-tag="seguranca">
-          <p class="tag"><span data-l="en">security · in progress</span><span data-l="pt">segurança · em andamento</span></p>
-          <h3><span data-l="en">next: labs and write-ups</span><span data-l="pt">próximo: labs e write-ups</span></h3>
-          <p class="desc" data-l="en">Documented hands-on labs: what I attacked or defended, how, and what I learned.</p>
-          <p class="desc" data-l="pt">Laboratórios práticos documentados: o que ataquei ou defendi, como e o que aprendi.</p>
-        </article>
 
       </div>
 
       <!-- avisa por texto quando o filtro não devolve nada -->
-      <p class="vazio" id="vazio" role="status" hidden><span data-l="en">no projects in this area yet.</span><span data-l="pt">nenhum projeto nessa área ainda.</span></p>
+      <p class="vazio" id="vazio" role="status" hidden><span data-l="en">no projects in this category.</span><span data-l="pt">nenhum projeto nessa categoria.</span></p>
     </div>
   </section>
 
@@ -2960,7 +2970,25 @@ html.js .boot.boot-pulado {
         tokens --m-unity, --m-godot... no :root, como as outras marcas.
         Desenhos do Simple Icons (24x24).
       -->
-      <div class="jogos-grupos">
+      <div class="area-grupos">
+        <!--
+          PROJETOS DE JOGO ficam aqui, não na seção 02. Copie o <article>
+          de um projeto da 02 (com stack e link) e troque o conteúdo; o
+          cartão reservado sai quando o primeiro jogo de verdade entrar.
+          Não deixe o reservado parado por meses: vira sinal ruim.
+        -->
+        <div class="grupo">
+          <h3 class="grupo-titulo revelar"><span data-l="en">game projects</span><span data-l="pt">projetos de jogos</span></h3>
+          <div class="grade-projetos">
+            <article class="projeto reservado revelar" data-tag="jogos">
+              <p class="tag"><span data-l="en">game · in progress</span><span data-l="pt">jogo · em andamento</span></p>
+              <h3><span data-l="en">next: a playable game</span><span data-l="pt">próximo: um jogo jogável</span></h3>
+              <p class="desc" data-l="en">A small game built from start to finish, published on itch.io with its source code here.</p>
+              <p class="desc" data-l="pt">Um jogo pequeno, do início ao fim, publicado no itch.io com o código aqui.</p>
+            </article>
+          </div>
+        </div>
+
         <div class="grupo revelar">
           <h3 class="grupo-titulo"><span data-l="en">engines and tools</span><span data-l="pt">motores e ferramentas</span></h3>
           <ul class="grade-logos grade-motores cascata">
@@ -3066,22 +3094,44 @@ html.js .boot.boot-pulado {
       </div>
 
       <!--
-        Estes são os conceitos que já aparecem na sua stack. Quando começar a
-        usar ferramenta de análise (Wireshark, Nmap, tcpdump), adicione aqui —
-        mas só depois de usar de verdade. Item que você não sabe defender numa
-        entrevista custa mais caro do que a linha a mais vale.
+        PROJETOS DE SEGURANÇA ficam aqui, não na seção 02 (mesma regra
+        dos jogos na 03): copie o <article> de um projeto, troque o
+        conteúdo e tire o cartão reservado quando o primeiro entrar.
       -->
-      <ul class="conceitos revelar cascata">
-        <li><span data-l="en">pentest fundamentals (eJPT)</span><span data-l="pt">fundamentos de pentest (eJPT)</span></li>
-        <li>TCP/IP</li>
-        <li>DNS</li>
-        <li>DHCP</li>
-        <li><span data-l="en">log analysis</span><span data-l="pt">análise de log</span></li>
-        <li>troubleshooting</li>
-        <li><span data-l="en">access control</span><span data-l="pt">controle de acesso</span></li>
-        <li><span data-l="en">basic hardening</span><span data-l="pt">hardening básico</span></li>
-        <li><span data-l="en">backup and restore</span><span data-l="pt">backup e restauração</span></li>
-      </ul>
+      <div class="area-grupos">
+        <div class="grupo">
+          <h3 class="grupo-titulo revelar"><span data-l="en">security projects</span><span data-l="pt">projetos de segurança</span></h3>
+          <div class="grade-projetos">
+            <article class="projeto reservado revelar" data-tag="seguranca">
+              <p class="tag"><span data-l="en">security · in progress</span><span data-l="pt">segurança · em andamento</span></p>
+              <h3><span data-l="en">next: labs and write-ups</span><span data-l="pt">próximo: labs e write-ups</span></h3>
+              <p class="desc" data-l="en">Documented hands-on labs: what I attacked or defended, how, and what I learned.</p>
+              <p class="desc" data-l="pt">Laboratórios práticos documentados: o que ataquei ou defendi, como e o que aprendi.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="grupo revelar">
+          <h3 class="grupo-titulo"><span data-l="en">concepts I work with</span><span data-l="pt">conceitos com que trabalho</span></h3>
+          <!--
+            Estes são os conceitos que já aparecem na sua stack. Quando começar a
+            usar ferramenta de análise (Wireshark, Nmap, tcpdump), adicione aqui —
+            mas só depois de usar de verdade. Item que você não sabe defender numa
+            entrevista custa mais caro do que a linha a mais vale.
+          -->
+          <ul class="conceitos cascata">
+            <li><span data-l="en">pentest fundamentals (eJPT)</span><span data-l="pt">fundamentos de pentest (eJPT)</span></li>
+            <li>TCP/IP</li>
+            <li>DNS</li>
+            <li>DHCP</li>
+            <li><span data-l="en">log analysis</span><span data-l="pt">análise de log</span></li>
+            <li>troubleshooting</li>
+            <li><span data-l="en">access control</span><span data-l="pt">controle de acesso</span></li>
+            <li><span data-l="en">basic hardening</span><span data-l="pt">hardening básico</span></li>
+            <li><span data-l="en">backup and restore</span><span data-l="pt">backup e restauração</span></li>
+          </ul>
+        </div>
+      </div>
     </div>
   </section>
 

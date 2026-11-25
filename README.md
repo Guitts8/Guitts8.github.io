@@ -27,6 +27,8 @@ Os caminhos `assets/...` no HTML são relativos. Se você mover as imagens de pa
 
 **Seções da página:** hero · 01 sobre · 02 projetos · 03 jogos · 04 segurança e redes · 05 stack · 06 trajetória · 07 contato.
 
+**Cada área tem um sotaque de cor:** software no âmbar de sempre, jogos em fúcsia, segurança em verde. Só `--accent` e `--accent-2` mudam, dentro de `#jogos` e `#seguranca` (e nos atalhos do menu e do hero que levam até elas). O bloco fica no CSS, procure por "SOTAQUE DE COR POR ÁREA".
+
 **A página é bilíngue (inglês e português).** Todo texto visível existe duas vezes, lado a lado, marcado com `data-l="en"` e `data-l="pt"`:
 
 ```html
@@ -65,7 +67,7 @@ Os três cartões reservados viraram projetos de verdade: **domumERP**, **FluxaA
 
 Na descrição, o problema vem primeiro — quem tinha, o que doía. A tecnologia fica na linha de baixo, nos chips. Um cartão que abre com "aplicação Next.js com Prisma" já perdeu o leitor.
 
-Os filtros são as três áreas: `software`, `jogos` e `seguranca` (o tipo do projeto, como sistema ou ia, continua no `.tag` do cartão). Um projeto que serve a duas áreas leva as duas no `data-tag`, separadas por espaço: `data-tag="software seguranca"`. Há um cartão reservado para jogos e outro para segurança; troque cada um pelo projeto de verdade assim que publicar. Para criar uma categoria nova (ex: `dados`):
+Esta seção é só de **software**. Projeto de jogo vai para a grade "projetos de jogos" da seção 03, e projeto de segurança para a grade "projetos de segurança" da seção 04 — cada um na área dele. Os filtros daqui são por tipo: `sistema`, `ia` e `ferramenta`. Projeto com dois tipos leva os dois no `data-tag`, separados por espaço. Para criar uma categoria nova (ex: `dados`):
 
 1. Adicione o botão dentro de `<div class="filtros">`:
    ```html
@@ -91,7 +93,7 @@ Os desenhos vieram do [Simple Icons](https://simpleicons.org) (24×24). C# e SQL
 
 ### Jogos (seção 03)
 
-Três cartões (história, partida, bug), a grade de motores (Unity, Godot, Unreal, C++, Blender) e a lista do que você trabalha em jogos. O texto diz com todas as letras que é projeto pessoal, não estúdio: mantenha assim até ter experiência em estúdio. Quando publicar um jogo, ele entra como cartão na seção 02 com `data-tag="jogos"`, no lugar do cartão reservado.
+Três cartões (história, partida, bug), a grade **projetos de jogos** (por enquanto com um cartão reservado), a grade de motores (Unity, Godot, Unreal, C++, Blender) e a lista do que você trabalha em jogos. O texto diz com todas as letras que é projeto pessoal, não estúdio: mantenha assim até ter experiência em estúdio. Quando publicar um jogo, copie o `<article class="projeto">` de um projeto da seção 02, troque o conteúdo e cole na grade de projetos de jogos, no lugar do cartão reservado. A seção 04 funciona igual para projetos de segurança.
 
 ### Trajetória (seção 06)
 
