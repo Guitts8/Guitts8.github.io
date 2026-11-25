@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,19 +11,29 @@
 
   O QUE AINDA FALTA (procure por "FALTA:" neste arquivo):
     - o ID do Formspree                 (procure por SEU_ID_AQUI)
-    - o link do currículo em PDF        (bloco comentado na seção 06)
+    - o link do currículo em PDF        (bloco comentado na seção 07)
 
   TODAS as cores estão no bloco ":root" logo abaixo. Não há nenhum
   hexadecimal fora dele — trocar a identidade visual inteira é mexer
   em 8 valores do tema escuro e 8 do claro.
+
+  IDIOMA (inglês e português na mesma página)
+  Todo texto visível existe duas vezes, lado a lado:
+      <span data-l="en">projects</span><span data-l="pt">projetos</span>
+  O CSS esconde o idioma que não está ativo. Ao editar um texto, edite
+  OS DOIS. Atributos (aria-label, placeholder, alt) ficam em inglês no
+  próprio atributo e em português num data-pt-<atributo>; o JS troca.
+  Ordem de decisão do idioma: ?lang=en|pt na URL > escolha salva >
+  idioma do navegador (pt* vira português, o resto vira inglês).
+  Para mandar o link para recrutador de fora: guitts8.github.io/?lang=en
   ============================================================================
 -->
 
-<title>Raul Guilherme — back-end, redes e segurança</title>
-<meta name="description" content="Raul Guilherme, 21 anos. Analista de helpdesk júnior e estudante de ADS. Back-end, redes e segurança da informação.">
+<title>Raul Guilherme — software, games & security</title>
+<meta name="description" content="Raul Guilherme — junior developer from Brazil. Back-end software, game development with Unity, Godot and Unreal, and cybersecurity (eJPT).">
 
-<meta property="og:title" content="Raul Guilherme — back-end, redes e segurança">
-<meta property="og:description" content="Analista de helpdesk júnior e estudante de ADS. Back-end, redes e segurança da informação.">
+<meta property="og:title" content="Raul Guilherme — software, games & security">
+<meta property="og:description" content="Junior developer from Brazil. Back-end software, game development and cybersecurity (eJPT).">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0A0908">
 
@@ -47,6 +57,28 @@
     } catch (e) {
       /* localStorage bloqueado (aba anônima): fica no padrão escuro. */
     }
+
+    /* IDIOMA — também aqui em cima, pelo mesmo motivo do tema: decidir
+       depois do primeiro paint faria o texto trocar de língua na cara
+       de quem chegou. ?lang= na URL ganha de tudo (é o link que vai no
+       e-mail); depois a escolha salva; depois o idioma do navegador. */
+    var idioma = null;
+    try {
+      var pedido = new URLSearchParams(location.search).get('lang');
+      if (pedido === 'en' || pedido === 'pt') idioma = pedido;
+    } catch (e) { /* navegador sem URLSearchParams: segue o resto */ }
+    if (!idioma) {
+      try {
+        var guardado = localStorage.getItem('idioma');
+        if (guardado === 'en' || guardado === 'pt') idioma = guardado;
+      } catch (e) { /* sem localStorage: decide pelo navegador */ }
+    }
+    if (!idioma) {
+      var preferidos = navigator.languages || [navigator.language || 'en'];
+      idioma = /^pt\b/i.test(preferidos[0] || '') ? 'pt' : 'en';
+    }
+    raiz.setAttribute('data-lang', idioma);
+    raiz.setAttribute('lang', idioma === 'pt' ? 'pt-BR' : 'en');
 
     /* A decisão sobre o boot precisa sair AQUI, e não no script do rodapé:
        lá embaixo a página já pintou, e a tela de boot entraria por cima do
@@ -112,6 +144,13 @@
   --m-git:       #F05032;
   --m-linux:     #FCC624;
 
+  /* motores e ferramentas de jogo (só a grade da seção 03) */
+  --m-unity:     #EDEDED;
+  --m-godot:     #6FA8DC;
+  --m-unreal:    #D9D9E3;
+  --m-blender:   #F5792A;
+  --m-cpp:       #6295CB;
+
   /* --- tipografia --- */
   --f-display: 'Archivo Black', 'Arial Black', system-ui, sans-serif;
   --f-sans:    'Space Grotesk', system-ui, -apple-system, sans-serif;
@@ -173,6 +212,12 @@
   --m-react:     #0B7C9E;
   --m-git:       #C2371F;
   --m-linux:     #8A6400;
+
+  --m-unity:     #1A1A1A;
+  --m-godot:     #2F6A9E;
+  --m-unreal:    #0E1128;
+  --m-blender:   #B25A00;
+  --m-cpp:       #00599C;
 }
 
 /* ==========================================================================
@@ -404,6 +449,20 @@ a {
 :root[data-theme="light"] .btn-tema .icone-claro { display: block; }
 :root[data-theme="light"] .btn-tema .icone-escuro { display: none; }
 
+/* Botão de idioma: mesmo círculo do botão de tema, com a sigla do idioma
+   para onde ele LEVA (em inglês mostra "PT", em português mostra "EN"). */
+.btn-idioma {
+  font-family: var(--f-mono);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+/* Esconde o idioma inativo. Sem data-lang (antes do script) vale o inglês.
+   !important só aqui: o elemento visível mantém o display que já tinha. */
+:root:not([data-lang="pt"]) [data-l="pt"],
+:root[data-lang="pt"] [data-l="en"] { display: none !important; }
+
 .selo-vaga {
   display: inline-flex;
   align-items: center;
@@ -557,6 +616,17 @@ section {
 .sobrancelha i {
   font-style: normal;
   color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+/* as três áreas do hero são atalhos para a seção de cada uma */
+.sobrancelha a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color .2s ease, border-color .2s ease;
+}
+.sobrancelha a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .hero h1 {
@@ -1188,6 +1258,12 @@ section {
   color: var(--muted);
   font-size: var(--t-peq);
 }
+
+/* seção 03 (jogos): os grupos abaixo dos cartões */
+.jogos-grupos { margin-top: clamp(2.5rem, 6vw, 4rem); }
+.jogos-grupos .conceitos { margin-top: 0; }
+/* cinco logos numa fileira só no desktop; quebra sozinha no celular */
+.grade-logos.grade-motores { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
 
 /* lista de conceitos, em duas colunas */
 .conceitos {
@@ -2442,23 +2518,23 @@ html.js .boot.boot-pulado {
     </div>
 
     <div class="boot-log">
-      <p class="boot-linha" style="--i: 0"><span class="boot-ok">[  ok  ]</span> crinos.dev — inicializando</p>
-      <p class="boot-linha" style="--i: 1"><span class="boot-ok">[  ok  ]</span> montando /home/raul</p>
-      <p class="boot-linha" style="--i: 2"><span class="boot-ok">[  ok  ]</span> carregando stack · c# · .net · java · linux</p>
-      <p class="boot-linha" style="--i: 3"><span class="boot-ok">[  ok  ]</span> rede · tcp/ip · dns · log</p>
-      <p class="boot-linha" style="--i: 4"><span class="boot-ok">[ done ]</span> sessão pronta<span class="boot-cur"></span></p>
+      <p class="boot-linha" style="--i: 0"><span class="boot-ok">[  ok  ]</span> crinos.dev — <span data-l="en">initializing</span><span data-l="pt">inicializando</span></p>
+      <p class="boot-linha" style="--i: 1"><span class="boot-ok">[  ok  ]</span> <span data-l="en">mounting</span><span data-l="pt">montando</span> /home/raul</p>
+      <p class="boot-linha" style="--i: 2"><span class="boot-ok">[  ok  ]</span> <span data-l="en">loading</span><span data-l="pt">carregando</span> stack · c# · .net · linux · unity · godot</p>
+      <p class="boot-linha" style="--i: 3"><span class="boot-ok">[  ok  ]</span> <span data-l="en">network</span><span data-l="pt">rede</span> · tcp/ip · dns · log · ejpt</p>
+      <p class="boot-linha" style="--i: 4"><span class="boot-ok">[ done ]</span> <span data-l="en">session ready</span><span data-l="pt">sessão pronta</span><span class="boot-cur"></span></p>
     </div>
 
     <div class="boot-rodape">
       <i class="boot-barra"></i>
       <!-- curto de propósito: a dica é flex:none e a barra é quem encolhe.
            Num celular de 320px cada caractere aqui sai do tamanho da barra. -->
-      <span class="boot-dica">clique para pular</span>
+      <span class="boot-dica"><span data-l="en">click to skip</span><span data-l="pt">clique para pular</span></span>
     </div>
   </div>
 </div>
 
-<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+<a class="pular" href="#conteudo"><span data-l="en">Skip to content</span><span data-l="pt">Pular para o conteúdo</span></a>
 
 <div class="trama" aria-hidden="true"></div>
 <div class="brilho" aria-hidden="true"></div>
@@ -2471,19 +2547,25 @@ html.js .boot.boot-pulado {
   <div class="envolve">
     <a class="logo" href="#topo">Crinos<span>.dev</span></a>
 
-    <nav aria-label="Navegação principal">
+    <nav aria-label="Main navigation" data-pt-aria-label="Navegação principal">
       <ul class="nav-links">
-        <li><a href="#sobre">sobre</a></li>
-        <li><a href="#projetos">projetos</a></li>
-        <li><a href="#seguranca">segurança</a></li>
-        <li><a href="#stack">stack</a></li>
-        <li class="opcional"><a href="#trajetoria">trajetória</a></li>
-        <li><a href="#contato">contato</a></li>
+        <li><a href="#sobre"><span data-l="en">about</span><span data-l="pt">sobre</span></a></li>
+        <li><a href="#projetos"><span data-l="en">projects</span><span data-l="pt">projetos</span></a></li>
+        <li><a href="#jogos"><span data-l="en">games</span><span data-l="pt">jogos</span></a></li>
+        <li><a href="#seguranca"><span data-l="en">security</span><span data-l="pt">segurança</span></a></li>
+        <li class="opcional"><a href="#stack">stack</a></li>
+        <li class="opcional"><a href="#trajetoria"><span data-l="en">journey</span><span data-l="pt">trajetória</span></a></li>
+        <li><a href="#contato"><span data-l="en">contact</span><span data-l="pt">contato</span></a></li>
       </ul>
     </nav>
 
     <div class="acoes-topo">
-      <button class="btn-tema" id="btn-tema" type="button" aria-label="Alternar entre tema claro e escuro">
+      <!-- mostra a sigla do idioma para onde o clique LEVA -->
+      <button class="btn-tema btn-idioma" id="btn-idioma" type="button"
+              aria-label="Ver em português" data-pt-aria-label="View in English"
+              lang="pt-BR" data-pt-lang="en"><span data-l="en">PT</span><span data-l="pt">EN</span></button>
+
+      <button class="btn-tema" id="btn-tema" type="button" aria-label="Toggle light and dark theme" data-pt-aria-label="Alternar entre tema claro e escuro">
         <!-- lua: aparece no tema escuro -->
         <svg class="icone-escuro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -2497,7 +2579,7 @@ html.js .boot.boot-pulado {
 
       <span class="selo-vaga">
         <span class="ponto" aria-hidden="true"></span>
-        aberto a júnior
+        <span data-l="en">open to junior roles</span><span data-l="pt">aberto a júnior</span>
       </span>
     </div>
   </div>
@@ -2513,7 +2595,9 @@ html.js .boot.boot-pulado {
 
         <div class="hero-texto">
           <p class="sobrancelha">
-            Full stack <i>•</i> APIS <i>•</i> segurança da informação
+            <a href="#projetos">Software</a> <i>•</i>
+            <a href="#jogos"><span data-l="en">Games</span><span data-l="pt">Jogos</span></a> <i>•</i>
+            <a href="#seguranca"><span data-l="en">Security</span><span data-l="pt">Segurança</span></a>
           </p>
 
           <!--
@@ -2523,18 +2607,24 @@ html.js .boot.boot-pulado {
             O aria-label fixa o que o leitor de tela anuncia, para ele não
             pegar o título no meio do embaralhamento do scramble.
           -->
-          <h1 aria-label="Full stack & Cybersec">
-            <span class="glitch" data-text="Full stack">Full stack</span>
-            <span class="destaque glitch" data-text="& Cybersec">& Cybersec</span>
+          <!-- Cada palavra precisa caber na coluna do hero no tamanho máximo
+               do título: "SEGURANÇA" não cabe, por isso o PT usa "Cybersec",
+               que já era a palavra do título antigo. -->
+          <h1 aria-label="Dev, Games &amp; Security" data-pt-aria-label="Dev, Jogos &amp; Cybersec">
+            <span class="glitch" data-l="en" data-text="Dev, Games">Dev, Games</span><span class="glitch" data-l="pt" data-text="Dev, Jogos">Dev, Jogos</span>
+            <span class="destaque glitch" data-l="en" data-text="&amp; Security">&amp; Security</span><span class="destaque glitch" data-l="pt" data-text="&amp; Cybersec">&amp; Cybersec</span>
           </h1>
 
-          <p class="sub">
-            <strong>Ferramentas de segurança</strong>, APIs e ERPs completos - construídos entre trabalho, projeto pessoal e faculdade.
+          <p class="sub" data-l="en">
+            <strong>Back-end systems, games and security</strong> — built between a support job, personal projects and college.
+          </p>
+          <p class="sub" data-l="pt">
+            <strong>Sistemas back-end, jogos e segurança</strong> — construídos entre o trabalho no suporte, projetos pessoais e a faculdade.
           </p>
 
           <div class="acoes">
-            <a class="btn btn-cheio" href="#projetos">ver projetos →</a>
-            <a class="btn btn-contorno" href="#contato"><span class="cursor">&gt;_</span> falar comigo</a>
+            <a class="btn btn-cheio" href="#projetos"><span data-l="en">see projects →</span><span data-l="pt">ver projetos →</span></a>
+            <a class="btn btn-contorno" href="#contato"><span class="cursor">&gt;_</span> <span data-l="en">get in touch</span><span data-l="pt">falar comigo</span></a>
           </div>
 
           <div class="hero-links">
@@ -2564,7 +2654,8 @@ html.js .boot.boot-pulado {
           -->
           <img class="avatar" src="assets/avatar.png" width="880" height="880"
                fetchpriority="high" decoding="async"
-               alt="Ilustração de Raul: personagem de cabelo preto e camiseta preta segurando um notebook, com um pinguim do Linux no ombro e um halter ao lado dos pés.">
+               alt="Illustration of Raul: a character with black hair and a black T-shirt holding a laptop, with a Linux penguin on his shoulder and a dumbbell by his feet."
+               data-pt-alt="Ilustração de Raul: personagem de cabelo preto e camiseta preta segurando um notebook, com um pinguim do Linux no ombro e um halter ao lado dos pés.">
         </div>
 
       </div>
@@ -2575,19 +2666,27 @@ html.js .boot.boot-pulado {
   <section id="sobre" class="faixa">
     <div class="envolve">
       <div class="cabeca-secao revelar">
-        <p class="rotulo"><b>01</b> — sobre</p>
-        <h2 class="titulo-secao"><em>Por trás da tela</em></h2>
+        <p class="rotulo"><b>01</b> — <span data-l="en">about</span><span data-l="pt">sobre</span></p>
+        <h2 class="titulo-secao"><em><span data-l="en">Behind the screen</span><span data-l="pt">Por trás da tela</span></em></h2>
         <div class="risco" aria-hidden="true"></div>
       </div>
 
       <div class="sobre-grade">
         <div class="sobre-texto revelar">
-          <p>Me chamo Raul Guilherme e tenho 21 anos. Estou no <strong>4º semestre de Análise e Desenvolvimento de Sistemas</strong> e trabalho como <strong>analista de helpdesk júnior na Supermídia</strong>. Todos os dias lido com: chamado real, log real, usuário real. Nada roda em ambiente controlado, e isso é a minha maior oportunidade de aprender todos os dias.</p>
+          <p data-l="en">I'm Raul Guilherme, 21. I'm in the <strong>4th semester of Systems Analysis and Development</strong> and work as a <strong>junior helpdesk analyst at Supermídia</strong>. Every day I deal with real tickets, real logs and real users. Nothing runs in a controlled environment, and that is my best chance to learn something new every day.</p>
+          <p data-l="pt">Me chamo Raul Guilherme e tenho 21 anos. Estou no <strong>4º semestre de Análise e Desenvolvimento de Sistemas</strong> e trabalho como <strong>analista de helpdesk júnior na Supermídia</strong>. Todos os dias lido com: chamado real, log real, usuário real. Nada roda em ambiente controlado, e isso é a minha maior oportunidade de aprender todos os dias.</p>
 
-          <p>Me interessei por desenvolvimento desde sempre pois tive contato com tecnologia desde muito cedo, e acabei entrando de cabeça na cybersec quando <strong>me aprofundei em Linux durante uma onda de interesse.</strong>
-          <p>Estudo Java, C#/.NET e APIs REST do lado do servidor, e do outro lado o que sustenta tudo: banco, Linux, rede, log. Apaixonado por Linux, venho construindo atualmente minha própria LFS.</p>
+          <p data-l="en">I've been around technology since I was very young, so development came naturally. I went all in on cybersecurity when <strong>a wave of curiosity pulled me deep into Linux.</strong></p>
+          <p data-l="pt">Me interessei por desenvolvimento desde sempre pois tive contato com tecnologia desde muito cedo, e acabei entrando de cabeça na cybersec quando <strong>me aprofundei em Linux durante uma onda de interesse.</strong></p>
 
-          <p class="frase">Suporte me ensinou a alegria de consertar as coisas, e principalmente, de evitar a necessidade de consertos</p>
+          <p data-l="en">I study Java, C#/.NET and REST APIs on the server side, and on the other side what holds it all up: databases, Linux, networks, logs. I love Linux, and I'm currently building my own LFS.</p>
+          <p data-l="pt">Estudo Java, C#/.NET e APIs REST do lado do servidor, e do outro lado o que sustenta tudo: banco, Linux, rede, log. Apaixonado por Linux, venho construindo atualmente minha própria LFS.</p>
+
+          <p data-l="en">And I play everything, from <strong>story-driven narrative games to competitive multiplayer</strong>. That's why I also build games in Unity, Godot and Unreal Engine.</p>
+          <p data-l="pt">E jogo de tudo, de <strong>jogos narrativos guiados pela história a multiplayer competitivo</strong>. É por isso que também desenvolvo jogos em Unity, Godot e Unreal Engine.</p>
+
+          <p class="frase" data-l="en">Support taught me the joy of fixing things, and above all, of making fixes unnecessary</p>
+          <p class="frase" data-l="pt">Suporte me ensinou a alegria de consertar as coisas, e principalmente, de evitar a necessidade de consertos</p>
         </div>
 
         <div class="sobre-lado">
@@ -2601,15 +2700,15 @@ html.js .boot.boot-pulado {
           <div class="numeros revelar">
             <div class="numero">
               <b data-num="2">2</b>
-              <span>Projetos aplicados com clientes reais</span>
+              <span><span data-l="en">Projects applied with real clients</span><span data-l="pt">Projetos aplicados com clientes reais</span></span>
             </div>
             <div class="numero">
               <b data-num="5">5</b>
-              <span>Anos estudando T.I.</span>
+              <span><span data-l="en">Years studying IT</span><span data-l="pt">Anos estudando T.I.</span></span>
             </div>
             <div class="numero">
               <b data-num="20" data-prefixo="+">+20</b>
-              <span>Tecnologias na stack</span>
+              <span><span data-l="en">Technologies in the stack</span><span data-l="pt">Tecnologias na stack</span></span>
             </div>
             <!--
               O Tux é o único cartão com imagem, então ganha o modificador
@@ -2639,16 +2738,17 @@ html.js .boot.boot-pulado {
             </div>
             <div class="term-corpo">
               <code class="term-linha"><span class="term-prompt">$</span> <span class="term-cmd">whoami</span></code>
-              <code class="term-linha term-saida">raul guilherme — 21 anos</code>
-              <code class="term-linha term-saida">helpdesk júnior · 4º semestre de ADS</code>
+              <code class="term-linha term-saida">raul guilherme — <span data-l="en">21 years old</span><span data-l="pt">21 anos</span></code>
+              <code class="term-linha term-saida"><span data-l="en">junior helpdesk · ADS, 4th semester</span><span data-l="pt">helpdesk júnior · 4º semestre de ADS</span></code>
               <code class="term-linha">&nbsp;</code>
-              <code class="term-linha"><span class="term-prompt">$</span> <span class="term-cmd">cat foco.txt</span></code>
-              <code class="term-linha term-saida"><span class="term-chave">back-end </span> ▸ c# / .net · apis rest</code>
-              <code class="term-linha term-saida"><span class="term-chave">redes    </span> ▸ tcp-ip · dns · log</code>
-              <code class="term-linha term-saida"><span class="term-chave">segurança</span> ▸ como o dado vaza</code>
+              <code class="term-linha"><span class="term-prompt">$</span> <span class="term-cmd"><span data-l="en">cat focus.txt</span><span data-l="pt">cat foco.txt</span></span></code>
+              <code class="term-linha term-saida"><span class="term-chave">back-end </span> ▸ c# / .net · <span data-l="en">rest apis</span><span data-l="pt">apis rest</span></code>
+              <code class="term-linha term-saida"><span class="term-chave"><span data-l="en">games    </span><span data-l="pt">jogos    </span></span> ▸ unity · godot · unreal</code>
+              <code class="term-linha term-saida"><span class="term-chave"><span data-l="en">network  </span><span data-l="pt">redes    </span></span> ▸ tcp-ip · dns · log</code>
+              <code class="term-linha term-saida"><span class="term-chave"><span data-l="en">security </span><span data-l="pt">segurança</span></span> ▸ <span data-l="en">ejpt · how data leaks</span><span data-l="pt">ejpt · como o dado vaza</span></code>
               <code class="term-linha">&nbsp;</code>
-              <code class="term-linha"><span class="term-prompt">$</span> <span class="term-cmd">status --vagas</span></code>
-              <code class="term-linha term-saida">aberto a oportunidades júnior<span class="term-cursor" aria-hidden="true"></span></code>
+              <code class="term-linha"><span class="term-prompt">$</span> <span class="term-cmd"><span data-l="en">status --jobs</span><span data-l="pt">status --vagas</span></span></code>
+              <code class="term-linha term-saida"><span data-l="en">open to junior roles</span><span data-l="pt">aberto a oportunidades júnior</span><span class="term-cursor" aria-hidden="true"></span></code>
             </div>
           </div>
         </div>
@@ -2660,8 +2760,8 @@ html.js .boot.boot-pulado {
   <section id="projetos">
     <div class="envolve">
       <div class="cabeca-secao revelar">
-        <p class="rotulo"><b>02</b> — projetos</p>
-        <h2 class="titulo-secao">Um pouco dos <em>meus projetos</em>.</h2>
+        <p class="rotulo"><b>02</b> — <span data-l="en">projects</span><span data-l="pt">projetos</span></p>
+        <h2 class="titulo-secao"><span data-l="en">A few of <em>my projects</em>.</span><span data-l="pt">Um pouco dos <em>meus projetos</em>.</span></h2>
         <div class="risco" aria-hidden="true"></div>
       </div>
 
@@ -2669,12 +2769,18 @@ html.js .boot.boot-pulado {
         Os botões carregam data-filtro; os cartões carregam data-tag.
         Para criar uma categoria nova, use a mesma string nos dois lugares.
         Se um filtro ficar sem nenhum projeto, apague o botão dele.
+
+        Os filtros são as TRÊS ÁREAS (software, jogos, segurança): é o que o
+        recrutador de cada vaga quer achar. O tipo do projeto (sistema, ia,
+        ferramenta, protótipo...) continua escrito no .tag de cada cartão.
+        Projeto que serve a duas áreas: data-tag="software seguranca" e o
+        filtro acha pelos dois (o JS separa por espaço).
       -->
-      <div class="filtros" id="filtros" role="group" aria-label="Filtrar projetos por categoria">
-        <button class="filtro" type="button" data-filtro="todos" aria-pressed="true">todos</button>
-        <button class="filtro" type="button" data-filtro="sistema" aria-pressed="false">sistema</button>
-        <button class="filtro" type="button" data-filtro="ia" aria-pressed="false">ia</button>
-        <button class="filtro" type="button" data-filtro="ferramenta" aria-pressed="false">ferramenta</button>
+      <div class="filtros" id="filtros" role="group" aria-label="Filter projects by area" data-pt-aria-label="Filtrar projetos por área">
+        <button class="filtro" type="button" data-filtro="todos" aria-pressed="true"><span data-l="en">all</span><span data-l="pt">todos</span></button>
+        <button class="filtro" type="button" data-filtro="software" aria-pressed="false">software</button>
+        <button class="filtro" type="button" data-filtro="jogos" aria-pressed="false"><span data-l="en">games</span><span data-l="pt">jogos</span></button>
+        <button class="filtro" type="button" data-filtro="seguranca" aria-pressed="false"><span data-l="en">security</span><span data-l="pt">segurança</span></button>
       </div>
 
       <div class="grade-projetos" id="grade-projetos">
@@ -2694,77 +2800,229 @@ html.js .boot.boot-pulado {
           ====================================================================
         -->
 
-        <article class="projeto revelar" data-tag="sistema">
-          <p class="tag">sistema</p>
+        <article class="projeto revelar" data-tag="software">
+          <p class="tag"><span data-l="en">system</span><span data-l="pt">sistema</span></p>
           <h3>domumERP</h3>
-          <p class="desc">Imobiliária de porte médio guarda o imóvel num sistema, o funil de
+          <p class="desc" data-l="en">A mid-sized real estate agency keeps properties in one system, the client
+             pipeline in a spreadsheet and contracts in Word, and nobody knows which
+             commission has already been paid. domumERP brings records, CRM, contracts and
+             finances into one place, and the agency's public website is generated from the same records.</p>
+          <p class="desc" data-l="pt">Imobiliária de porte médio guarda o imóvel num sistema, o funil de
              clientes na planilha e o contrato no Word — e ninguém sabe qual comissão já
              saiu. O domumERP junta cadastro, CRM, contrato e financeiro num lugar só, e
              o site público da imobiliária nasce do mesmo cadastro.</p>
           <p class="stack"><span>Next.js</span><span>TypeScript</span><span>PostgreSQL</span><span>Prisma</span><span>Auth.js</span></p>
           <a class="repo" href="https://github.com/Guitts8/domumERP" target="_blank" rel="noopener noreferrer">
-            ver repositório
+            <span data-l="en">see repository</span><span data-l="pt">ver repositório</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M7 17L17 7M17 7H8M17 7v9"/>
             </svg>
-            <span class="so-leitor">de domumERP (abre em nova aba)</span>
+            <span class="so-leitor"><span data-l="en">for domumERP (opens in a new tab)</span><span data-l="pt">de domumERP (abre em nova aba)</span></span>
           </a>
         </article>
 
-        <article class="projeto revelar" data-tag="ia">
-          <p class="tag">ia</p>
+        <article class="projeto revelar" data-tag="software">
+          <p class="tag"><span data-l="en">ai</span><span data-l="pt">ia</span></p>
           <h3>FluxaAI</h3>
-          <p class="desc">Negócio pequeno precisa postar toda semana e não tem quem escreva.
+          <p class="desc" data-l="en">A small business needs to post every week and has no one to write.
+             FluxaAI generates titles, captions and hashtags in the brand's voice, schedules
+             posts and charges by plan, with each client's database isolated from the others.</p>
+          <p class="desc" data-l="pt">Negócio pequeno precisa postar toda semana e não tem quem escreva.
              O FluxaAI gera título, legenda e hashtag na voz da marca, agenda a publicação
              nas redes e cobra por plano — cada cliente com o banco isolado do vizinho.</p>
           <p class="stack"><span>Node.js</span><span>Express</span><span>SQLite</span><span>Claude API</span><span>JWT</span></p>
           <a class="repo" href="https://github.com/Guitts8/FluxaAI" target="_blank" rel="noopener noreferrer">
-            ver repositório
+            <span data-l="en">see repository</span><span data-l="pt">ver repositório</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M7 17L17 7M17 7H8M17 7v9"/>
             </svg>
-            <span class="so-leitor">de FluxaAI (abre em nova aba)</span>
+            <span class="so-leitor"><span data-l="en">for FluxaAI (opens in a new tab)</span><span data-l="pt">de FluxaAI (abre em nova aba)</span></span>
           </a>
         </article>
 
-        <article class="projeto revelar" data-tag="ferramenta">
-          <p class="tag">ferramenta</p>
+        <article class="projeto revelar" data-tag="software">
+          <p class="tag"><span data-l="en">tool</span><span data-l="pt">ferramenta</span></p>
           <h3>UmbraForge</h3>
-          <p class="desc">App de nota genérico obriga quem escreve, quem estuda e quem faz
+          <p class="desc" data-l="en">A generic notes app forces writers, students and people doing
+             math into the same screen. UmbraForge changes its interface to fit the
+             kind of work and stores everything as Markdown on disk: no account, no cloud,
+             no internet. In development.</p>
+          <p class="desc" data-l="pt">App de nota genérico obriga quem escreve, quem estuda e quem faz
              matemática a caber na mesma tela. O UmbraForge troca a interface conforme o
              tipo de trabalho e guarda tudo em Markdown no disco — sem conta, sem nuvem,
              sem internet. Em desenvolvimento.</p>
           <p class="stack"><span>Tauri</span><span>Rust</span><span>React</span><span>TypeScript</span><span>Tailwind</span></p>
           <a class="repo" href="https://github.com/Guitts8/umbraforge" target="_blank" rel="noopener noreferrer">
-            ver repositório
+            <span data-l="en">see repository</span><span data-l="pt">ver repositório</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M7 17L17 7M17 7H8M17 7v9"/>
             </svg>
-            <span class="so-leitor">de UmbraForge (abre em nova aba)</span>
+            <span class="so-leitor"><span data-l="en">for UmbraForge (opens in a new tab)</span><span data-l="pt">de UmbraForge (abre em nova aba)</span></span>
           </a>
+        </article>
+
+        <!--
+          RESERVADOS: um por área que ainda não tem projeto publicado.
+          Quando o projeto de verdade entrar, troque o cartão reservado por
+          um <article class="projeto revelar"> completo, com stack e link.
+          Não deixe reservado por meses: cartão vazio parado vira sinal ruim.
+        -->
+        <article class="projeto reservado revelar" data-tag="jogos">
+          <p class="tag"><span data-l="en">game · in progress</span><span data-l="pt">jogo · em andamento</span></p>
+          <h3><span data-l="en">next: a playable game</span><span data-l="pt">próximo: um jogo jogável</span></h3>
+          <p class="desc" data-l="en">A small game built from start to finish, published on itch.io with its source code here.</p>
+          <p class="desc" data-l="pt">Um jogo pequeno, do início ao fim, publicado no itch.io com o código aqui.</p>
+        </article>
+
+        <article class="projeto reservado revelar" data-tag="seguranca">
+          <p class="tag"><span data-l="en">security · in progress</span><span data-l="pt">segurança · em andamento</span></p>
+          <h3><span data-l="en">next: labs and write-ups</span><span data-l="pt">próximo: labs e write-ups</span></h3>
+          <p class="desc" data-l="en">Documented hands-on labs: what I attacked or defended, how, and what I learned.</p>
+          <p class="desc" data-l="pt">Laboratórios práticos documentados: o que ataquei ou defendi, como e o que aprendi.</p>
         </article>
 
       </div>
 
       <!-- avisa por texto quando o filtro não devolve nada -->
-      <p class="vazio" id="vazio" role="status" hidden>nenhum projeto nessa categoria.</p>
+      <p class="vazio" id="vazio" role="status" hidden><span data-l="en">no projects in this area yet.</span><span data-l="pt">nenhum projeto nessa área ainda.</span></p>
     </div>
   </section>
 
-  <!-- ====================== 03 SEGURANÇA ====================== -->
-  <section id="seguranca" class="faixa">
+  <!-- ====================== 03 JOGOS ====================== -->
+  <!--
+    Seção nova. Tudo aqui é projeto pessoal e estudo, não trabalho em
+    estúdio, e o texto diz isso com todas as letras: é o que se sustenta
+    numa entrevista. Quando um jogo for publicado, ele entra como cartão
+    na seção 02 (data-tag="jogos") e pode ganhar um link aqui também.
+  -->
+  <section id="jogos" class="faixa">
     <div class="envolve">
       <div class="cabeca-secao revelar">
-        <p class="rotulo"><b>03</b> — segurança e redes</p>
-        <h2 class="titulo-secao">Para proteger, <em>é preciso entender a falha</em>.</h2>
-        <p class="sub-secao">
+        <p class="rotulo"><b>03</b> — <span data-l="en">games</span><span data-l="pt">jogos</span></p>
+        <h2 class="titulo-secao"><span data-l="en">From the story <em>to the scoreboard</em>.</span><span data-l="pt">Da história <em>ao placar</em>.</span></h2>
+        <p class="sub-secao" data-l="en">
+          I play games of every kind, from story-driven narratives to competitive
+          multiplayer, and building them is the other side of the same passion.
+          I make games in Unity, Godot and Unreal Engine as personal projects,
+          outside of work. No studio experience yet: that's the next step.
+        </p>
+        <p class="sub-secao" data-l="pt">
+          Jogo de tudo, de narrativas guiadas pela história a multiplayer
+          competitivo, e desenvolver jogos é o outro lado da mesma paixão.
+          Faço jogos em Unity, Godot e Unreal Engine como projeto pessoal,
+          fora do trabalho. Experiência em estúdio ainda não: é o próximo passo.
+        </p>
+        <div class="risco" aria-hidden="true"></div>
+      </div>
+
+      <div class="grade-seg">
+
+        <div class="cartao-seg revelar">
+          <div class="icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          </div>
+          <h3><span data-l="en">the story</span><span data-l="pt">a história</span></h3>
+          <p data-l="en">In a narrative game, pacing is part of the code: how long a scene breathes, when the music changes, what the player sees first.</p>
+          <p data-l="pt">Num jogo narrativo, o ritmo faz parte do código: quanto tempo uma cena respira, quando a música muda, o que o jogador vê primeiro.</p>
+        </div>
+
+        <div class="cartao-seg revelar">
+          <div class="icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/>
+            </svg>
+          </div>
+          <h3><span data-l="en">the match</span><span data-l="pt">a partida</span></h3>
+          <p data-l="en">In competitive play, the player tests every rule and every frame. Responsive controls and fair, predictable systems are what make a match worth playing again.</p>
+          <p data-l="pt">No competitivo, o jogador testa cada regra e cada quadro. Controle que responde e sistema justo e previsível é o que faz a partida valer a revanche.</p>
+        </div>
+
+        <div class="cartao-seg revelar">
+          <div class="icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 2l1.88 1.88M14.12 3.88L16 2M9 7.13v-1a3 3 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9M6.53 9C4.6 8.8 3 7.1 3 5M6 13H2M3 21c0-2.1 1.7-3.9 3.8-4M20.97 5c0 2.1-1.6 3.8-3.5 4M22 13h-4M17.2 17c2.1.1 3.8 1.9 3.8 4"/>
+            </svg>
+          </div>
+          <h3><span data-l="en">the bug</span><span data-l="pt">o bug</span></h3>
+          <p data-l="en">My day job is finding the exact steps that break a system and proving the fix works. That habit carries straight into games, where players find every crack.</p>
+          <p data-l="pt">Meu trabalho é achar o passo exato que quebra um sistema e provar que a correção funciona. Esse hábito vai direto para os jogos, onde o jogador acha toda rachadura.</p>
+        </div>
+
+      </div>
+
+      <!--
+        Mesma grade de logos da seção 05, sem o sticky. As cores saem dos
+        tokens --m-unity, --m-godot... no :root, como as outras marcas.
+        Desenhos do Simple Icons (24x24).
+      -->
+      <div class="jogos-grupos">
+        <div class="grupo revelar">
+          <h3 class="grupo-titulo"><span data-l="en">engines and tools</span><span data-l="pt">motores e ferramentas</span></h3>
+          <ul class="grade-logos grade-motores cascata">
+            <li style="--cor: var(--m-unity)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12.9288 4.2939 3.7997 2.1929c.1366.077.1415.2905 0 .3675l-4.515 2.6076a.4192.4192 0 0 1-.4246 0L7.274 6.8543c-.139-.0745-.1415-.293 0-.3675l3.7972-2.193V0L1.3758 5.5977V16.793l3.7177-2.1456v-4.3858c-.0025-.1565.1813-.2682.318-.1838l4.5148 2.6076a.4252.4252 0 0 1 .2136.3676v5.2127c.0025.1565-.1813.2682-.3179.1838l-3.7996-2.1929-3.7178 2.1457L12 24l9.6954-5.5977-3.7178-2.1457-3.7996 2.1929c-.1341.082-.3229-.0248-.3179-.1838V13.053c0-.1565.087-.2956.2136-.3676l4.5149-2.6076c.134-.082.3228.0224.3179.1838v4.3858l3.7177 2.1456V5.5977L12.9288 0Z"/></svg>
+              <span>Unity</span>
+            </li>
+            <li style="--cor: var(--m-godot)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5598.683c-1.096.244-2.1812.5831-3.1983 1.0951.023.8981.081 1.7582.199 2.6323-.395.253-.81.47-1.178.766-.375.288-.7581.564-1.0971.9011-.6781-.448-1.3962-.869-2.1352-1.2411C1.3532 5.6934.608 6.6186 0 7.6546c.458.7411.936 1.4352 1.4521 2.0942h.014v6.3565c.012 0 .023 0 .035.003l3.8963.376c.204.02.364.184.378.3891l.12 1.7201 3.3994.242.234-1.587c.03-.206.207-.358.415-.358h4.1114c.208 0 .385.152.415.358l.234 1.587 3.3993-.242.12-1.72a.4196.4196 0 01.378-.3891l3.8954-.376c.012 0 .023-.003.035-.003v-.5071h.002V9.7498h.014c.516-.659.994-1.3531 1.4521-2.0942-.608-1.036-1.3541-1.9611-2.1512-2.8192-.739.372-1.4571.793-2.1352 1.2411-.339-.337-.721-.613-1.096-.901-.369-.296-.7841-.5131-1.1781-.7661.117-.8741.175-1.7342.199-2.6323-1.0171-.512-2.1012-.851-3.1983-1.095-.438.736-.838 1.533-1.1871 2.3121-.414-.069-.829-.094-1.2461-.099h-.016c-.417.005-.832.03-1.2461.099-.349-.779-.749-1.576-1.1881-2.3121l.001-.001zM6.4765 9.9889c1.2971 0 2.3492 1.0511 2.3492 2.3482s-1.052 2.3482-2.3492 2.3482c-1.296 0-2.3482-1.051-2.3482-2.3482 0-1.297 1.0511-2.3482 2.3482-2.3482zm11.049 0c1.296 0 2.3482 1.0511 2.3482 2.3482s-1.0511 2.3482-2.3482 2.3482-2.3492-1.051-2.3492-2.3482c0-1.297 1.051-2.3482 2.3492-2.3482zm-10.824.9301c-.861 0-1.559.698-1.559 1.5591s.698 1.5582 1.559 1.5582c.8611 0 1.5592-.698 1.5592-1.5582 0-.86-.697-1.559-1.5591-1.559zm10.598 0c-.8611 0-1.5582.698-1.5582 1.5591s.697 1.5582 1.5581 1.5582c.8611 0 1.5592-.698 1.5592-1.5582 0-.86-.697-1.559-1.5592-1.559zm-5.2985.453c.417 0 .757.308.757.6871v2.1622c0 .379-.339.687-.757.687s-.756-.308-.756-.687V12.059c0-.379.339-.687.756-.687zM1.4601 16.9464c.002.377.006.789.006.871 0 3.7014 4.6944 5.4795 10.5269 5.5005h.014c5.8325-.02 10.5259-1.7991 10.5259-5.5004 0-.084.005-.495.007-.871l-3.5023.338-.121 1.729a.421.421 0 01-.389.3901l-4.1814.296a.4203.4203 0 01-.415-.358l-.238-1.6141h-3.3863l-.238 1.6141a.4192.4192 0 01-.4451.357l-4.1513-.296c-.208-.015-.375-.181-.389-.389l-.12-1.7292-3.5044-.337z"/></svg>
+              <span>Godot</span>
+            </li>
+            <li style="--cor: var(--m-unreal)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0a12 12 0 1012 12A12 12 0 0012 0zm0 23.52A11.52 11.52 0 1123.52 12 11.52 11.52 0 0112 23.52zm7.13-9.791c-.206.997-1.126 3.557-4.06 4.942l-1.179-1.325-1.988 2a7.338 7.338 0 01-5.804-2.978 2.859 2.859 0 00.65.123c.326.006.678-.114.678-.66v-5.394a.89.89 0 00-1.116-.89c-.92.212-1.656 2.509-1.656 2.509a7.304 7.304 0 012.528-5.597 7.408 7.408 0 013.73-1.721c-1.006.573-1.57 1.507-1.57 2.29 0 1.262.76 1.109.984.923v7.28a1.157 1.157 0 00.148.256 1.075 1.075 0 00.88.445c.76 0 1.747-.868 1.747-.868V9.172c0-.6-.452-1.324-.905-1.572 0 0 .838-.149 1.484.346a5.537 5.537 0 01.387-.425c1.508-1.48 2.929-1.902 4.112-2.112 0 0-2.151 1.69-2.151 3.96 0 1.687.043 5.801.043 5.801.799.771 1.986-.342 3.059-1.441Z"/></svg>
+              <span>Unreal Engine</span>
+            </li>
+            <li style="--cor: var(--m-cpp)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.394 6c-.167-.29-.398-.543-.652-.69L12.926.22c-.509-.294-1.34-.294-1.848 0L2.26 5.31c-.508.293-.923 1.013-.923 1.6v10.18c0 .294.104.62.271.91.167.29.398.543.652.69l8.816 5.09c.508.293 1.34.293 1.848 0l8.816-5.09c.254-.147.485-.4.652-.69.167-.29.27-.616.27-.91V6.91c.003-.294-.1-.62-.268-.91zM12 19.11c-3.92 0-7.109-3.19-7.109-7.11 0-3.92 3.19-7.11 7.11-7.11a7.133 7.133 0 016.156 3.553l-3.076 1.78a3.567 3.567 0 00-3.08-1.78A3.56 3.56 0 008.444 12 3.56 3.56 0 0012 15.555a3.57 3.57 0 003.08-1.778l3.078 1.78A7.135 7.135 0 0112 19.11zm7.11-6.715h-.79v.79h-.79v-.79h-.79v-.79h.79v-.79h.79v.79h.79zm2.962 0h-.79v.79h-.79v-.79h-.79v-.79h.79v-.79h.79v.79h.79z"/></svg>
+              <span>C++</span>
+            </li>
+            <li style="--cor: var(--m-blender)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.51 13.214c.046-.8.438-1.506 1.03-2.006a3.424 3.424 0 0 1 2.212-.79c.85 0 1.631.3 2.211.79.592.5.983 1.206 1.028 2.005.045.823-.285 1.586-.865 2.153a3.389 3.389 0 0 1-2.374.938 3.393 3.393 0 0 1-2.376-.938c-.58-.567-.91-1.33-.865-2.152M7.35 14.831c.006.314.106.922.256 1.398a7.372 7.372 0 0 0 1.593 2.757 8.227 8.227 0 0 0 2.787 2.001 8.947 8.947 0 0 0 3.66.76 8.964 8.964 0 0 0 3.657-.772 8.285 8.285 0 0 0 2.785-2.01 7.428 7.428 0 0 0 1.592-2.762 6.964 6.964 0 0 0 .25-3.074 7.123 7.123 0 0 0-1.016-2.779 7.764 7.764 0 0 0-1.852-2.043h.002L13.566 2.55l-.02-.015c-.492-.378-1.319-.376-1.86.002-.547.382-.609 1.015-.123 1.415l-.001.001 3.126 2.543-9.53.01h-.013c-.788.001-1.545.518-1.695 1.172-.154.665.38 1.217 1.2 1.22V8.9l4.83-.01-8.62 6.617-.034.025c-.813.622-1.075 1.658-.563 2.313.52.667 1.625.668 2.447.004L7.414 14s-.069.52-.063.831zm12.09 1.741c-.97.988-2.326 1.548-3.795 1.55-1.47.004-2.827-.552-3.797-1.538a4.51 4.51 0 0 1-1.036-1.622 4.282 4.282 0 0 1 .282-3.519 4.702 4.702 0 0 1 1.153-1.371c.942-.768 2.141-1.183 3.396-1.185 1.256-.002 2.455.41 3.398 1.175.48.391.87.854 1.152 1.367a4.28 4.28 0 0 1 .522 1.706 4.236 4.236 0 0 1-.239 1.811 4.54 4.54 0 0 1-1.035 1.626"/></svg>
+              <span>Blender</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="grupo revelar">
+          <h3 class="grupo-titulo"><span data-l="en">what I work on</span><span data-l="pt">no que eu trabalho</span></h3>
+          <ul class="conceitos cascata">
+            <li><span data-l="en">gameplay programming</span><span data-l="pt">programação de gameplay</span></li>
+            <li><span data-l="en">mechanics and systems</span><span data-l="pt">mecânicas e sistemas</span></li>
+            <li><span data-l="en">prototyping</span><span data-l="pt">prototipagem</span></li>
+            <li><span data-l="en">scenes and nodes (Godot)</span><span data-l="pt">cenas e nós (Godot)</span></li>
+            <li><span data-l="en">Blueprints (Unreal)</span><span data-l="pt">Blueprints (Unreal)</span></li>
+            <li><span data-l="en">3D assets in Blender</span><span data-l="pt">assets 3D no Blender</span></li>
+            <li><span data-l="en">bug reproduction</span><span data-l="pt">reprodução de bugs</span></li>
+            <li><span data-l="en">testing and fix validation</span><span data-l="pt">teste e validação de correção</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== 04 SEGURANÇA ====================== -->
+  <section id="seguranca">
+    <div class="envolve">
+      <div class="cabeca-secao revelar">
+        <p class="rotulo"><b>04</b> — <span data-l="en">security and networks</span><span data-l="pt">segurança e redes</span></p>
+        <h2 class="titulo-secao"><span data-l="en">To protect it, <em>you have to understand the flaw</em>.</span><span data-l="pt">Para proteger, <em>é preciso entender a falha</em>.</span></h2>
+        <p class="sub-secao" data-l="en">
+          I don't call myself a security specialist: I'm at the start. What I
+          already have is the angle. Support puts me in front of infected machines,
+          reused passwords and logs nobody read every day. That's where the interest
+          comes from, and that's where I study from. First milestone done:
+          <strong>eJPT certified</strong> (Junior Penetration Tester).
+        </p>
+        <p class="sub-secao" data-l="pt">
           Não me chamo de especialista em segurança — estou no começo. O que já
           tenho é o ângulo: suporte me põe todo dia diante de máquina infectada,
           senha reaproveitada e log que ninguém leu. É de lá que vem o interesse,
-          e é por lá que estou estudando.
+          e é por lá que estou estudando. Primeiro marco cumprido:
+          <strong>certificação eJPT</strong> (Junior Penetration Tester).
         </p>
         <div class="risco" aria-hidden="true"></div>
       </div>
@@ -2777,8 +3035,9 @@ html.js .boot.boot-pulado {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
           </div>
-          <h3>Ação como causa</h3>
-          <p>A maior parte do que eu vejo quebrar não quebra por falha técnica: quebra por senha repetida, link clicado com pressa e acesso que ninguém revogou quando alguém saiu.</p>
+          <h3><span data-l="en">people as the cause</span><span data-l="pt">Ação como causa</span></h3>
+          <p data-l="en">Most of what I see break doesn't break because of a technical flaw: it breaks because of a reused password, a link clicked in a hurry and access nobody revoked when someone left.</p>
+          <p data-l="pt">A maior parte do que eu vejo quebrar não quebra por falha técnica: quebra por senha repetida, link clicado com pressa e acesso que ninguém revogou quando alguém saiu.</p>
         </div>
 
         <div class="cartao-seg revelar">
@@ -2787,8 +3046,9 @@ html.js .boot.boot-pulado {
               <path d="M4 17l6-6-6-6"/><path d="M12 19h8"/>
             </svg>
           </div>
-          <h3>log é prova, não enfeite</h3>
-          <p>Chamado sem histórico faz a gente refazer o diagnóstico do zero. Registrar o que aconteceu, com hora e contexto, é a diferença entre investigar e adivinhar.</p>
+          <h3><span data-l="en">logs are evidence, not decoration</span><span data-l="pt">log é prova, não enfeite</span></h3>
+          <p data-l="en">A ticket with no history means redoing the diagnosis from scratch. Recording what happened, with time and context, is the difference between investigating and guessing.</p>
+          <p data-l="pt">Chamado sem histórico faz a gente refazer o diagnóstico do zero. Registrar o que aconteceu, com hora e contexto, é a diferença entre investigar e adivinhar.</p>
         </div>
 
         <div class="cartao-seg revelar">
@@ -2798,8 +3058,9 @@ html.js .boot.boot-pulado {
               <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>
             </svg>
           </div>
-          <h3>a rede explica o resto</h3>
-          <p>Quase toda pergunta de "por que isso não funciona" termina em DNS, rota, porta fechada ou serviço fora do ar. Sem entender o caminho do pacote, o resto é chute.</p>
+          <h3><span data-l="en">the network explains the rest</span><span data-l="pt">a rede explica o resto</span></h3>
+          <p data-l="en">Almost every "why isn't this working" ends in DNS, a route, a closed port or a service that's down. Without understanding the path of the packet, the rest is guesswork.</p>
+          <p data-l="pt">Quase toda pergunta de "por que isso não funciona" termina em DNS, rota, porta fechada ou serviço fora do ar. Sem entender o caminho do pacote, o resto é chute.</p>
         </div>
 
       </div>
@@ -2811,28 +3072,33 @@ html.js .boot.boot-pulado {
         entrevista custa mais caro do que a linha a mais vale.
       -->
       <ul class="conceitos revelar cascata">
+        <li><span data-l="en">pentest fundamentals (eJPT)</span><span data-l="pt">fundamentos de pentest (eJPT)</span></li>
         <li>TCP/IP</li>
         <li>DNS</li>
         <li>DHCP</li>
-        <li>análise de log</li>
+        <li><span data-l="en">log analysis</span><span data-l="pt">análise de log</span></li>
         <li>troubleshooting</li>
-        <li>controle de acesso</li>
-        <li>hardening básico</li>
-        <li>backup e restauração</li>
+        <li><span data-l="en">access control</span><span data-l="pt">controle de acesso</span></li>
+        <li><span data-l="en">basic hardening</span><span data-l="pt">hardening básico</span></li>
+        <li><span data-l="en">backup and restore</span><span data-l="pt">backup e restauração</span></li>
       </ul>
     </div>
   </section>
 
-  <!-- ====================== 04 STACK ====================== -->
-  <section id="stack">
+  <!-- ====================== 05 STACK ====================== -->
+  <section id="stack" class="faixa">
     <div class="envolve">
       <div class="cabeca-secao revelar">
         <p class="rotulo rotulo-duplo">
-          <span><b>04</b> — stack</span>
-          <span class="rotulo-meta">linguagens, ferramentas e infra</span>
+          <span><b>05</b> — stack</span>
+          <span class="rotulo-meta"><span data-l="en">languages, tools and infra</span><span data-l="pt">linguagens, ferramentas e infra</span></span>
         </p>
-        <h2 class="titulo-secao">Tecnologias <em>que domino</em>.</h2>
-        <p class="sub-secao">
+        <h2 class="titulo-secao"><span data-l="en">Technologies <em>I work with</em>.</span><span data-l="pt">Tecnologias <em>que domino</em>.</span></h2>
+        <p class="sub-secao" data-l="en">
+          From languages to databases, front end and networks: what I use every day
+          to build, test and ship.
+        </p>
+        <p class="sub-secao" data-l="pt">
           De linguagem a banco, front e rede — o que eu uso no dia a dia para
           construir, testar e colocar no ar.
         </p>
@@ -2849,7 +3115,13 @@ html.js .boot.boot-pulado {
       <div class="stack-duas">
 
         <div class="stack-barras revelar">
-          <p class="nota-regua">
+          <p class="nota-regua" data-l="en">
+            Self-assessed level in each technology (not time of use or
+            certification). The scale: <strong>60</strong> = I solve it on my own
+            with the documentation. <strong>80</strong> = I solve it on my own and
+            can explain it to someone else.
+          </p>
+          <p class="nota-regua" data-l="pt">
             Nível de domínio autoavaliado em cada tecnologia (não é tempo de uso
             nem certificação). A régua: <strong>60</strong> = resolvo sozinho
             consultando a documentação. <strong>80</strong> = resolvo sozinho e
@@ -2858,11 +3130,11 @@ html.js .boot.boot-pulado {
 
           <div class="niveis-lista">
           <div class="nivel">
-            <div class="nivel-topo"><span class="nome">Análise / TroubleShooting</span><span class="valor">80</span></div>
+            <div class="nivel-topo"><span class="nome"><span data-l="en">Analysis / troubleshooting</span><span data-l="pt">Análise / TroubleShooting</span></span><span class="valor">80</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 80%"></i></div>
           </div>
           <div class="nivel">
-            <div class="nivel-topo"><span class="nome">Documentação técnica</span><span class="valor">75</span></div>
+            <div class="nivel-topo"><span class="nome"><span data-l="en">Technical documentation</span><span data-l="pt">Documentação técnica</span></span><span class="valor">75</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 75%"></i></div>
           </div>
           <div class="nivel">
@@ -2874,7 +3146,7 @@ html.js .boot.boot-pulado {
             <div class="barra" aria-hidden="true"><i style="--nivel: 70%"></i></div>
           </div>
           <div class="nivel">
-            <div class="nivel-topo"><span class="nome">Testes de API</span><span class="valor">70</span></div>
+            <div class="nivel-topo"><span class="nome"><span data-l="en">API testing</span><span data-l="pt">Testes de API</span></span><span class="valor">70</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 70%"></i></div>
           </div>
           <div class="nivel">
@@ -2894,7 +3166,7 @@ html.js .boot.boot-pulado {
             <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
           </div>
           <div class="nivel">
-            <div class="nivel-topo"><span class="nome">Segurança da informação</span><span class="valor">65</span></div>
+            <div class="nivel-topo"><span class="nome"><span data-l="en">Information security</span><span data-l="pt">Segurança da informação</span></span><span class="valor">65</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 65%"></i></div>
           </div>
           <div class="nivel">
@@ -2906,7 +3178,7 @@ html.js .boot.boot-pulado {
             <div class="barra" aria-hidden="true"><i style="--nivel: 80%"></i></div>
           </div>
           <div class="nivel">
-            <div class="nivel-topo"><span class="nome">Análise de logs</span><span class="valor">60</span></div>
+            <div class="nivel-topo"><span class="nome"><span data-l="en">Log analysis</span><span data-l="pt">Análise de logs</span></span><span class="valor">60</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 60%"></i></div>
           </div>
           <div class="nivel">
@@ -2926,7 +3198,7 @@ html.js .boot.boot-pulado {
             <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
           </div>
           <div class="nivel">
-            <div class="nivel-topo"><span class="nome">Redes / TCP-IP / DNS</span><span class="valor">55</span></div>
+            <div class="nivel-topo"><span class="nome"><span data-l="en">Networking / TCP-IP / DNS</span><span data-l="pt">Redes / TCP-IP / DNS</span></span><span class="valor">55</span></div>
             <div class="barra" aria-hidden="true"><i style="--nivel: 55%"></i></div>
           </div>
           </div>
@@ -2995,7 +3267,7 @@ html.js .boot.boot-pulado {
       </div>
 
       <div class="grupo revelar">
-        <h3 class="grupo-titulo">no dia a dia</h3>
+        <h3 class="grupo-titulo"><span data-l="en">every day</span><span data-l="pt">no dia a dia</span></h3>
         <div class="chips">
           <span class="chip">Visual Studio</span>
           <span class="chip">VS Code</span>
@@ -3020,7 +3292,7 @@ html.js .boot.boot-pulado {
       </div>
 
       <div class="grupo revelar">
-        <h3 class="grupo-titulo">já usei em projeto ou estudo</h3>
+        <h3 class="grupo-titulo"><span data-l="en">used in projects or study</span><span data-l="pt">já usei em projeto ou estudo</span></h3>
         <div class="chips">
           <span class="chip">Entity Framework</span>
           <span class="chip">Spring Boot</span>
@@ -3034,19 +3306,31 @@ html.js .boot.boot-pulado {
           <span class="chip">CodeIgniter</span>
           <span class="chip">MySQL</span>
           <span class="chip">JWT</span>
-          <span class="chip">testes unitários</span>
+          <span class="chip"><span data-l="en">unit testing</span><span data-l="pt">testes unitários</span></span>
+          <span class="chip">Unity</span>
+          <span class="chip">Godot</span>
+          <span class="chip">GDScript</span>
+          <span class="chip">Unreal Engine</span>
+          <span class="chip">Blueprints</span>
+          <span class="chip">C++</span>
+          <span class="chip">Blender</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ====================== 05 TRAJETÓRIA ====================== -->
-  <section id="trajetoria" class="faixa">
+  <!-- ====================== 06 TRAJETÓRIA ====================== -->
+  <section id="trajetoria">
     <div class="envolve">
       <div class="cabeca-secao revelar">
-        <p class="rotulo"><b>05</b> — trajetória</p>
-        <h2 class="titulo-secao">Trajetória <em>profissional</em>.</h2>
-        <p class="sub-secao">
+        <p class="rotulo"><b>06</b> — <span data-l="en">journey</span><span data-l="pt">trajetória</span></p>
+        <h2 class="titulo-secao"><span data-l="en">Professional <em>journey</em>.</span><span data-l="pt">Trajetória <em>profissional</em>.</span></h2>
+        <p class="sub-secao" data-l="en">
+          Three roles at Supermídia in a little over a year, always in the same
+          direction: away from operations and closer to where the system
+          actually runs.
+        </p>
+        <p class="sub-secao" data-l="pt">
           Três cargos na Supermídia em pouco mais de um ano, sempre no mesmo
           sentido: sair da operação e chegar mais perto de onde o sistema
           realmente roda.
@@ -3076,72 +3360,79 @@ html.js .boot.boot-pulado {
           <li class="marco agora revelar" data-tipo="cargo">
             <div class="marco-caixa">
               <div class="marco-topo">
-                <span class="marco-ano">2026 — agora</span>
-                <span class="marco-tipo">cargo</span>
-                <span class="marco-selo">atual</span>
+                <span class="marco-ano">2026 — <span data-l="en">now</span><span data-l="pt">agora</span></span>
+                <span class="marco-tipo"><span data-l="en">role</span><span data-l="pt">cargo</span></span>
+                <span class="marco-selo"><span data-l="en">current</span><span data-l="pt">atual</span></span>
               </div>
-              <h3>Analista de helpdesk júnior<span class="marco-onde">Supermídia</span></h3>
-              <p>Instalo e configuro os sistemas Supermídia e RX direto no ambiente do cliente: requisito, serviço, conectividade, SQL Server. Em Android, uso ADB para instalar, parametrizar e depurar. Quase tudo remoto — cada cliente tem um ambiente e uma rede diferentes, e é normalmente aí que mora o problema.</p>
+              <h3><span data-l="en">Junior helpdesk analyst</span><span data-l="pt">Analista de helpdesk júnior</span><span class="marco-onde">Supermídia</span></h3>
+              <p data-l="en">I install and configure the Supermídia and RX systems directly in the client's environment: requirements, services, connectivity, SQL Server. On Android, I use ADB to install, configure and debug. Almost everything is remote, and each client has a different environment and network, which is usually where the problem lives.</p>
+              <p data-l="pt">Instalo e configuro os sistemas Supermídia e RX direto no ambiente do cliente: requisito, serviço, conectividade, SQL Server. Em Android, uso ADB para instalar, parametrizar e depurar. Quase tudo remoto — cada cliente tem um ambiente e uma rede diferentes, e é normalmente aí que mora o problema.</p>
             </div>
           </li>
           <li class="marco revelar" data-tipo="cargo">
             <div class="marco-caixa">
               <div class="marco-topo">
                 <span class="marco-ano">2025 — 2026</span>
-                <span class="marco-tipo">cargo</span>
+                <span class="marco-tipo"><span data-l="en">role</span><span data-l="pt">cargo</span></span>
               </div>
-              <h3>Analista de suporte técnico<span class="marco-onde">Supermídia</span></h3>
-              <p>Aqui o chamado parou de terminar na tela. Log, reprodução do cenário, consulta em PostgreSQL, integração suspeita — e a documentação do incidente com evidência, para produto, QA e desenvolvimento conseguirem agir. Depois, validar a correção e olhar se voltou.</p>
+              <h3><span data-l="en">Technical support analyst</span><span data-l="pt">Analista de suporte técnico</span><span class="marco-onde">Supermídia</span></h3>
+              <p data-l="en">This is where a ticket stopped ending at the screen. Logs, reproducing the scenario, PostgreSQL queries, suspicious integrations, and documenting the incident with evidence so product, QA and development could act on it. Then validating the fix and checking whether it came back.</p>
+              <p data-l="pt">Aqui o chamado parou de terminar na tela. Log, reprodução do cenário, consulta em PostgreSQL, integração suspeita — e a documentação do incidente com evidência, para produto, QA e desenvolvimento conseguirem agir. Depois, validar a correção e olhar se voltou.</p>
             </div>
           </li>
           <li class="marco revelar" data-tipo="virada">
             <div class="marco-caixa">
               <div class="marco-topo">
                 <span class="marco-ano">2025</span>
-                <span class="marco-tipo">virada</span>
+                <span class="marco-tipo"><span data-l="en">turning point</span><span data-l="pt">virada</span></span>
               </div>
-              <h3>Segurança virou o foco</h3>
-              <p>Parei de tratar segurança como assunto paralelo e comecei a estudar como um dado vaza de verdade — engenharia social, credencial reaproveitada, log que ninguém leu. A partir dali passou a ser o critério de tudo que eu construo.</p>
+              <h3><span data-l="en">Security became the focus</span><span data-l="pt">Segurança virou o foco</span></h3>
+              <p data-l="en">I stopped treating security as a side topic and started studying how data really leaks: social engineering, reused credentials, logs nobody read. From then on it became the yardstick for everything I build.</p>
+              <p data-l="pt">Parei de tratar segurança como assunto paralelo e comecei a estudar como um dado vaza de verdade — engenharia social, credencial reaproveitada, log que ninguém leu. A partir dali passou a ser o critério de tudo que eu construo.</p>
             </div>
           </li>
           <li class="marco revelar" data-tipo="cargo">
             <div class="marco-caixa">
               <div class="marco-topo">
-                <span class="marco-ano">início de 2025</span>
-                <span class="marco-tipo">cargo</span>
+                <span class="marco-ano"><span data-l="en">early 2025</span><span data-l="pt">início de 2025</span></span>
+                <span class="marco-tipo"><span data-l="en">role</span><span data-l="pt">cargo</span></span>
               </div>
-              <h3>Entrei na Supermídia</h3>
-              <p>Comecei como técnico preparador de dados, cuidando da rotina de dados que os clientes usam e caçando inconsistência. Foi onde ficou claro que o erro quase nunca começa onde o usuário está olhando.</p>
+              <h3><span data-l="en">Joined Supermídia</span><span data-l="pt">Entrei na Supermídia</span></h3>
+              <p data-l="en">I started as a data preparation technician, handling the data routines clients rely on and hunting for inconsistencies. That's where it became clear that an error almost never starts where the user is looking.</p>
+              <p data-l="pt">Comecei como técnico preparador de dados, cuidando da rotina de dados que os clientes usam e caçando inconsistência. Foi onde ficou claro que o erro quase nunca começa onde o usuário está olhando.</p>
             </div>
           </li>
           <li class="marco revelar" data-tipo="formação">
             <div class="marco-caixa">
               <div class="marco-topo">
                 <span class="marco-ano">2024</span>
-                <span class="marco-tipo">formação</span>
+                <span class="marco-tipo"><span data-l="en">education</span><span data-l="pt">formação</span></span>
               </div>
-              <h3>Entrei em ADS</h3>
-              <p>Programar já tinha ficado sério, mas ficou claro que código sozinho não me bastava. Queria a stack inteira: banco, servidor, rede e a aplicação em cima.</p>
+              <h3><span data-l="en">Started college (ADS)</span><span data-l="pt">Entrei em ADS</span></h3>
+              <p data-l="en">Programming had already become serious, but it was clear code alone wasn't enough for me. I wanted the whole stack: database, server, network and the application on top.</p>
+              <p data-l="pt">Programar já tinha ficado sério, mas ficou claro que código sozinho não me bastava. Queria a stack inteira: banco, servidor, rede e a aplicação em cima.</p>
             </div>
           </li>
           <li class="marco revelar" data-tipo="virada">
             <div class="marco-caixa">
               <div class="marco-topo">
                 <span class="marco-ano">2023</span>
-                <span class="marco-tipo">virada</span>
+                <span class="marco-tipo"><span data-l="en">turning point</span><span data-l="pt">virada</span></span>
               </div>
-              <h3>Parei de tratar como hobby</h3>
-              <p>Decidi que a resposta era o que eu já fazia por conta: mexer em máquina e entender por que parou de funcionar. Mudou o método, não o assunto — virou estudo com hora marcada.</p>
+              <h3><span data-l="en">Stopped treating it as a hobby</span><span data-l="pt">Parei de tratar como hobby</span></h3>
+              <p data-l="en">I decided the answer was what I was already doing on my own: tinkering with machines and understanding why they stopped working. The method changed, not the subject: it became study on a schedule.</p>
+              <p data-l="pt">Decidi que a resposta era o que eu já fazia por conta: mexer em máquina e entender por que parou de funcionar. Mudou o método, não o assunto — virou estudo com hora marcada.</p>
             </div>
           </li>
           <li class="marco revelar" data-tipo="formação">
             <div class="marco-caixa">
               <div class="marco-topo">
                 <span class="marco-ano">2022</span>
-                <span class="marco-tipo">formação</span>
+                <span class="marco-tipo"><span data-l="en">education</span><span data-l="pt">formação</span></span>
               </div>
-              <h3>Fim do ensino médio</h3>
-              <p>Terminei com a pergunta em aberto: e agora? Não tinha resposta pronta e levei um tempo para achar uma que se sustentasse.</p>
+              <h3><span data-l="en">Finished high school</span><span data-l="pt">Fim do ensino médio</span></h3>
+              <p data-l="en">I finished with an open question: now what? I had no ready answer, and it took me a while to find one that would hold up.</p>
+              <p data-l="pt">Terminei com a pergunta em aberto: e agora? Não tinha resposta pronta e levei um tempo para achar uma que se sustentasse.</p>
             </div>
           </li>
         </ol>
@@ -3285,13 +3576,13 @@ html.js .boot.boot-pulado {
               formam um bolo só no rodapé do desenho.
             -->
             <g class="radar-rotulos">
-              <text x="180" y="12"  text-anchor="middle">cliente</text>
-              <text x="197" y="94">rede</text>
-              <text x="244" y="254" text-anchor="middle">serviço</text>
+              <text x="180" y="12"  text-anchor="middle"><tspan data-l="en">client</tspan><tspan data-l="pt">cliente</tspan></text>
+              <text x="197" y="94"><tspan data-l="en">network</tspan><tspan data-l="pt">rede</tspan></text>
+              <text x="244" y="254" text-anchor="middle"><tspan data-l="en">service</tspan><tspan data-l="pt">serviço</tspan></text>
               <text x="116" y="254" text-anchor="middle">firewall</text>
-              <text x="310" y="290" text-anchor="middle">integração</text>
-              <text x="50"  y="290" text-anchor="middle">dispositivo</text>
-              <text x="201" y="184" class="rotulo-nucleo">banco</text>
+              <text x="310" y="290" text-anchor="middle"><tspan data-l="en">integration</tspan><tspan data-l="pt">integração</tspan></text>
+              <text x="50"  y="290" text-anchor="middle"><tspan data-l="en">device</tspan><tspan data-l="pt">dispositivo</tspan></text>
+              <text x="201" y="184" class="rotulo-nucleo"><tspan data-l="en">database</tspan><tspan data-l="pt">banco</tspan></text>
             </g>
 
           </svg>
@@ -3301,19 +3592,20 @@ html.js .boot.boot-pulado {
     </div>
   </section>
 
-  <!-- ====================== 06 CONTATO ====================== -->
-  <section id="contato">
+  <!-- ====================== 07 CONTATO ====================== -->
+  <section id="contato" class="faixa">
     <div class="envolve">
       <div class="cabeca-secao revelar">
-        <p class="rotulo"><b>06</b> — contato</p>
-        <h2 class="titulo-secao">Onde <em>me achar</em>.</h2>
+        <p class="rotulo"><b>07</b> — <span data-l="en">contact</span><span data-l="pt">contato</span></p>
+        <h2 class="titulo-secao"><span data-l="en">Where to <em>find me</em>.</span><span data-l="pt">Onde <em>me achar</em>.</span></h2>
         <div class="risco" aria-hidden="true"></div>
       </div>
 
       <div class="contato-grade">
 
         <div class="revelar">
-          <p class="contato-intro">Procuro vaga júnior em back-end, infraestrutura ou segurança. Se for sobre isso, sobre um projeto ou só uma dúvida técnica, pode mandar. Respondo em até um dia útil.</p>
+          <p class="contato-intro" data-l="en">I'm looking for a junior role in software development, game development or cybersecurity, remote or international. If it's about that, a project or just a technical question, write to me. I reply within one business day.</p>
+          <p class="contato-intro" data-l="pt">Procuro vaga júnior em desenvolvimento de software, desenvolvimento de jogos ou cibersegurança, remota ou internacional. Se for sobre isso, sobre um projeto ou só uma dúvida técnica, pode mandar. Respondo em até um dia útil.</p>
 
           <ul class="lista-contato">
             <li>
@@ -3341,7 +3633,7 @@ html.js .boot.boot-pulado {
               com o link" > Leitor. Só então cole a URL aqui.
             <li>
               <a href="URL_DO_CURRICULO_PDF" target="_blank" rel="noopener noreferrer">
-                <span class="chave">currículo</span>
+                <span class="chave"><span data-l="en">resume</span><span data-l="pt">currículo</span></span>
                 <span class="valor-contato">PDF ↗</span>
               </a>
             </li>
@@ -3360,28 +3652,28 @@ html.js .boot.boot-pulado {
         <form class="revelar" action="https://formspree.io/f/SEU_ID_AQUI" method="POST">
 
           <div class="form-campo">
-            <label for="campo-nome">nome</label>
-            <input type="text" id="campo-nome" name="nome" required autocomplete="name" placeholder="como te chamo">
+            <label for="campo-nome"><span data-l="en">name</span><span data-l="pt">nome</span></label>
+            <input type="text" id="campo-nome" name="nome" required autocomplete="name" placeholder="what should I call you" data-pt-placeholder="como te chamo">
           </div>
 
           <div class="form-campo">
             <label for="campo-email">e-mail</label>
-            <input type="email" id="campo-email" name="email" required autocomplete="email" placeholder="para onde eu respondo">
+            <input type="email" id="campo-email" name="email" required autocomplete="email" placeholder="where I should reply" data-pt-placeholder="para onde eu respondo">
           </div>
 
           <div class="form-campo">
-            <label for="campo-msg">mensagem</label>
-            <textarea id="campo-msg" name="mensagem" required placeholder="manda o contexto"></textarea>
+            <label for="campo-msg"><span data-l="en">message</span><span data-l="pt">mensagem</span></label>
+            <textarea id="campo-msg" name="mensagem" required placeholder="give me the context" data-pt-placeholder="manda o contexto"></textarea>
           </div>
 
           <!-- o Formspree descarta o envio se este campo vier preenchido -->
           <div class="armadilha" aria-hidden="true">
-            <label for="campo-gotcha">não preencha este campo</label>
+            <label for="campo-gotcha"><span data-l="en">do not fill in this field</span><span data-l="pt">não preencha este campo</span></label>
             <input type="text" id="campo-gotcha" name="_gotcha" tabindex="-1" autocomplete="off">
           </div>
 
-          <button class="btn btn-cheio" type="submit">enviar mensagem →</button>
-          <p class="form-nota">respondo em até um dia útil.</p>
+          <button class="btn btn-cheio" type="submit"><span data-l="en">send message →</span><span data-l="pt">enviar mensagem →</span></button>
+          <p class="form-nota"><span data-l="en">I reply within one business day.</span><span data-l="pt">respondo em até um dia útil.</span></p>
         </form>
 
       </div>
@@ -3396,7 +3688,7 @@ html.js .boot.boot-pulado {
 <footer class="rodape">
   <div class="envolve">
     <p>© <span id="ano">2026</span> Raul Guilherme Rodrigues da Silva</p>
-    <p><a href="https://github.com/Guitts8/Guitts8.github.io" target="_blank" rel="noopener noreferrer">código deste site ↗</a></p>
+    <p><a href="https://github.com/Guitts8/Guitts8.github.io" target="_blank" rel="noopener noreferrer"><span data-l="en">source code of this site ↗</span><span data-l="pt">código deste site ↗</span></a></p>
   </div>
 </footer>
 
@@ -3426,6 +3718,56 @@ html.js .boot.boot-pulado {
   });
 
   /* ---------------------------------------------------------------
+     IDIOMA
+     O idioma inicial já foi decidido no <head> (data-lang no <html>).
+     O texto visível troca só com CSS; aqui ficam os atributos, que o
+     CSS não alcança: o valor em inglês mora no próprio atributo, o
+     português em data-pt-<atributo>. Na primeira troca o inglês é
+     guardado em data-en-<atributo> para poder voltar.
+     --------------------------------------------------------------- */
+  var raiz = document.documentElement;
+  var TITULOS = {
+    en: 'Raul Guilherme — software, games & security',
+    pt: 'Raul Guilherme — software, jogos e segurança'
+  };
+
+  function aplicarIdioma(idioma) {
+    raiz.setAttribute('data-lang', idioma);
+    raiz.setAttribute('lang', idioma === 'pt' ? 'pt-BR' : 'en');
+    document.title = TITULOS[idioma];
+
+    document.querySelectorAll('*').forEach(function (el) {
+      Array.prototype.slice.call(el.attributes).forEach(function (at) {
+        if (at.name.indexOf('data-pt-') !== 0) return;
+        var nome = at.name.slice(8);
+        var chaveEn = 'data-en-' + nome;
+        if (!el.hasAttribute(chaveEn)) el.setAttribute(chaveEn, el.getAttribute(nome) || '');
+        el.setAttribute(nome, idioma === 'pt' ? at.value : el.getAttribute(chaveEn));
+      });
+    });
+  }
+
+  aplicarIdioma(raiz.getAttribute('data-lang') === 'pt' ? 'pt' : 'en');
+
+  document.getElementById('btn-idioma').addEventListener('click', function () {
+    var novo = raiz.getAttribute('data-lang') === 'pt' ? 'en' : 'pt';
+    aplicarIdioma(novo);
+    try {
+      localStorage.setItem('idioma', novo);
+    } catch (e) {
+      /* sem localStorage a troca funciona, só não sobrevive ao reload */
+    }
+    /* o ?lang= da URL ganharia da escolha no próximo reload: tira ele */
+    try {
+      var url = new URL(location.href);
+      if (url.searchParams.has('lang')) {
+        url.searchParams.delete('lang');
+        history.replaceState(null, '', url.pathname + url.search + url.hash);
+      }
+    } catch (e) { /* navegador antigo: deixa a URL como está */ }
+  });
+
+  /* ---------------------------------------------------------------
      FILTRO DE PROJETOS
      Um listener no container (delegação). O estado ativo é aria-pressed.
      --------------------------------------------------------------- */
@@ -3447,7 +3789,7 @@ html.js .boot.boot-pulado {
     var visiveis = 0;
 
     grade.querySelectorAll('.projeto').forEach(function (cartao) {
-      var mostra = alvo === 'todos' || cartao.dataset.tag === alvo;
+      var mostra = alvo === 'todos' || (cartao.dataset.tag || '').split(' ').indexOf(alvo) !== -1;
       // hidden tira do fluxo E da tabulação — o link interno some junto
       cartao.hidden = !mostra;
       if (mostra) visiveis++;

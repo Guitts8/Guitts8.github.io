@@ -25,7 +25,17 @@ E dois que ficam só na sua máquina, fora do git:
 
 Os caminhos `assets/...` no HTML são relativos. Se você mover as imagens de pasta, o hero e o cartão do Tux ficam com o texto alternativo no lugar do desenho.
 
-**Seções da página:** hero · 01 sobre · 02 projetos · 03 segurança e redes · 04 stack · 05 trajetória · 06 contato.
+**Seções da página:** hero · 01 sobre · 02 projetos · 03 jogos · 04 segurança e redes · 05 stack · 06 trajetória · 07 contato.
+
+**A página é bilíngue (inglês e português).** Todo texto visível existe duas vezes, lado a lado, marcado com `data-l="en"` e `data-l="pt"`:
+
+```html
+<span data-l="en">projects</span><span data-l="pt">projetos</span>
+```
+
+O CSS esconde o idioma inativo. **Ao mudar um texto, mude os dois.** Atributos (`aria-label`, `placeholder`, `alt`) ficam em inglês no próprio atributo e em português num `data-pt-<atributo>`; o JS troca. O botão `PT`/`EN` no topo alterna e grava a escolha.
+
+Quem decide o idioma, nesta ordem: `?lang=en` ou `?lang=pt` na URL > a escolha salva no navegador > o idioma do navegador (português vira PT, o resto vira EN). **Nos e-mails para empresas de fora, mande `https://guitts8.github.io/?lang=en`** — e, para apontar direto para uma área, `?lang=en#jogos` ou `?lang=en#seguranca`.
 
 ---
 
@@ -39,9 +49,9 @@ Os caminhos `assets/...` no HTML são relativos. Se você mover as imagens de pa
 
 ### b) O currículo em PDF (quando tiver)
 
-O bloco está comentado no HTML, na lista de contato da seção 06. Quando tiver o link do Drive, descomente e troque `URL_DO_CURRICULO_PDF`.
+O bloco está comentado no HTML, na lista de contato da seção 07. Quando tiver o link do Drive, descomente e troque `URL_DO_CURRICULO_PDF`.
 
-### Opcional: ferramentas de segurança (seção 03)
+### Opcional: ferramentas de segurança (seção 04)
 
 A lista `<ul class="conceitos">` tem os conceitos que já estão na sua stack. Quando começar a usar Wireshark, Nmap ou tcpdump **de verdade**, adicione ali. Item que você não sabe defender numa entrevista custa mais caro do que a linha a mais vale.
 
@@ -55,7 +65,7 @@ Os três cartões reservados viraram projetos de verdade: **domumERP**, **FluxaA
 
 Na descrição, o problema vem primeiro — quem tinha, o que doía. A tecnologia fica na linha de baixo, nos chips. Um cartão que abre com "aplicação Next.js com Prisma" já perdeu o leitor.
 
-Os filtros atuais são `sistema`, `ia` e `ferramenta`. Para criar uma categoria nova (ex: `dados`):
+Os filtros são as três áreas: `software`, `jogos` e `seguranca` (o tipo do projeto, como sistema ou ia, continua no `.tag` do cartão). Um projeto que serve a duas áreas leva as duas no `data-tag`, separadas por espaço: `data-tag="software seguranca"`. Há um cartão reservado para jogos e outro para segurança; troque cada um pelo projeto de verdade assim que publicar. Para criar uma categoria nova (ex: `dados`):
 
 1. Adicione o botão dentro de `<div class="filtros">`:
    ```html
@@ -67,7 +77,7 @@ As strings precisam bater exatamente — o JS compara texto puro. Se um filtro f
 
 O estilo `.projeto.reservado` continua no CSS, para quando você quiser anunciar um projeto que ainda não existe: é um `<article class="projeto reservado revelar">` com tag, `h3` e descrição, sem chips e sem link.
 
-### Stack (seção 04)
+### Stack (seção 05)
 
 Duas colunas: as 18 barras à esquerda, a grade de 12 logos à direita.
 
@@ -79,7 +89,11 @@ A coluna dos logos é `position: sticky`: ela tem 4 fileiras contra 18 barras, e
 
 Os desenhos vieram do [Simple Icons](https://simpleicons.org) (24×24). C# e SQL Server não existem lá — foram removidos por questão de marca —, então esses dois vieram do [Devicon](https://devicon.dev) e têm `viewBox` de 128×128. É por isso que os `viewBox` são diferentes entre si.
 
-### Trajetória (seção 05)
+### Jogos (seção 03)
+
+Três cartões (história, partida, bug), a grade de motores (Unity, Godot, Unreal, C++, Blender) e a lista do que você trabalha em jogos. O texto diz com todas as letras que é projeto pessoal, não estúdio: mantenha assim até ter experiência em estúdio. Quando publicar um jogo, ele entra como cartão na seção 02 com `data-tag="jogos"`, no lugar do cartão reservado.
+
+### Trajetória (seção 06)
 
 Sete marcos, do mais recente para o mais antigo, misturando trabalho e formação. Os três primeiros são os cargos na Supermídia.
 
