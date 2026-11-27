@@ -156,7 +156,7 @@ Abaixo de 900px o radar **sai inteiro** (`display: none`), em vez de descer para
 
 ## 3. Configurar o formulário (Formspree)
 
-Sem isso o formulário não envia nada.
+**Já configurado** (ID `xrpqvgpw`, recebe em contato.raulguilherme@gmail.com). Os passos abaixo servem só se um dia você trocar de formulário.
 
 1. Crie uma conta grátis em <https://formspree.io>
 2. **New Form** → escolha o e-mail que vai receber as mensagens

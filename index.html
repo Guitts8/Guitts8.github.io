@@ -10,7 +10,6 @@
   Arquivo único. CSS e JS embutidos. Sem build, sem dependência de pacote.
 
   O QUE AINDA FALTA (procure por "FALTA:" neste arquivo):
-    - o ID do Formspree                 (procure por SEU_ID_AQUI)
     - o link do currículo em PDF        (bloco comentado na seção 07)
 
   TODAS as cores estão no bloco ":root" logo abaixo. Não há nenhum
@@ -3702,11 +3701,11 @@ html.js .boot.boot-pulado {
         </div>
 
         <!--
-          FALTA: FORMSPREE — onde pegar o ID
+          FORMSPREE — já configurado (ID xrpqvgpw). Para trocar de formulário:
           1. Crie uma conta grátis em https://formspree.io
           2. New Form → escolha o e-mail que vai receber as mensagens
           3. Ele mostra um endpoint tipo https://formspree.io/f/xayzbwqd
-          4. Troque SEU_ID_AQUI abaixo pela parte final (xayzbwqd)
+          4. Troque o ID no action abaixo pela parte final (xayzbwqd)
           O plano grátis aceita 50 envios por mês.
 
           O envio é por JavaScript (a pessoa não sai da página e vê a
@@ -3715,7 +3714,7 @@ html.js .boot.boot-pulado {
           Enquanto o ID não estiver no lugar, o JS não envia nada e avisa
           para usar o e-mail direto.
         -->
-        <form class="revelar" id="form-contato" action="https://formspree.io/f/SEU_ID_AQUI" method="POST">
+        <form class="revelar" id="form-contato" action="https://formspree.io/f/xrpqvgpw" method="POST">
 
           <!-- assunto do e-mail que chega na sua caixa -->
           <input type="hidden" name="_subject" value="Contato pelo portfólio (guitts8.github.io)">
