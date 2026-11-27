@@ -10,7 +10,6 @@
   Arquivo único. CSS e JS embutidos. Sem build, sem dependência de pacote.
 
   O QUE AINDA FALTA (procure por "FALTA:" neste arquivo):
-    - o ID do Formspree                 (procure por SEU_ID_AQUI)
     - o link do currículo em PDF        (bloco comentado na seção 07)
 
   TODAS as cores estão no bloco ":root" logo abaixo. Não há nenhum
@@ -1957,6 +1956,16 @@ section {
 }
 .form-campo textarea { resize: vertical; min-height: 135px; }
 
+/* resultado do envio: mesma letra da nota, cor do acento no sucesso */
+.form-status {
+  font-family: var(--f-mono);
+  font-size: var(--t-min);
+  margin-top: .9rem;
+  color: var(--muted);
+}
+.form-status[data-estado="ok"] { color: var(--accent); }
+.form-status[data-estado="erro"] { color: var(--text); }
+
 .form-campo input::placeholder,
 .form-campo textarea::placeholder { color: var(--muted); opacity: 1; }
 
@@ -3692,14 +3701,23 @@ html.js .boot.boot-pulado {
         </div>
 
         <!--
-          FALTA: FORMSPREE — onde pegar o ID
+          FORMSPREE — já configurado (ID xrpqvgpw). Para trocar de formulário:
           1. Crie uma conta grátis em https://formspree.io
           2. New Form → escolha o e-mail que vai receber as mensagens
           3. Ele mostra um endpoint tipo https://formspree.io/f/xayzbwqd
-          4. Troque SEU_ID_AQUI abaixo pela parte final (xayzbwqd)
+          4. Troque o ID no action abaixo pela parte final (xayzbwqd)
           O plano grátis aceita 50 envios por mês.
+
+          O envio é por JavaScript (a pessoa não sai da página e vê a
+          confirmação aqui mesmo). Sem JavaScript, o formulário envia do
+          jeito normal e o Formspree mostra a página de agradecimento dele.
+          Enquanto o ID não estiver no lugar, o JS não envia nada e avisa
+          para usar o e-mail direto.
         -->
-        <form class="revelar" action="https://formspree.io/f/SEU_ID_AQUI" method="POST">
+        <form class="revelar" id="form-contato" action="https://formspree.io/f/xrpqvgpw" method="POST">
+
+          <!-- assunto do e-mail que chega na sua caixa -->
+          <input type="hidden" name="_subject" value="Contato pelo portfólio (guitts8.github.io)">
 
           <div class="form-campo">
             <label for="campo-nome"><span data-l="en">name</span><span data-l="pt">nome</span></label>
@@ -3724,6 +3742,15 @@ html.js .boot.boot-pulado {
 
           <button class="btn btn-cheio" type="submit"><span data-l="en">send message →</span><span data-l="pt">enviar mensagem →</span></button>
           <p class="form-nota"><span data-l="en">I reply within one business day.</span><span data-l="pt">respondo em até um dia útil.</span></p>
+
+          <!-- resultado do envio; o texto é escolhido pelo JS no idioma ativo -->
+          <p class="form-status" id="form-status" role="status" aria-live="polite" hidden
+             data-msg-en-ok="Message sent. Thanks! I'll reply within one business day."
+             data-msg-pt-ok="Mensagem enviada. Obrigado! Respondo em até um dia útil."
+             data-msg-en-erro="It didn't go through. Try again or email me at contato.raulguilherme@gmail.com."
+             data-msg-pt-erro="Não foi. Tente de novo ou mande e-mail para contato.raulguilherme@gmail.com."
+             data-msg-en-sem-id="The form isn't set up yet. Please email me at contato.raulguilherme@gmail.com."
+             data-msg-pt-sem-id="O formulário ainda não está configurado. Mande e-mail para contato.raulguilherme@gmail.com."></p>
         </form>
 
       </div>
@@ -3816,6 +3843,54 @@ html.js .boot.boot-pulado {
       }
     } catch (e) { /* navegador antigo: deixa a URL como está */ }
   });
+
+  /* ---------------------------------------------------------------
+     FORMULÁRIO DE CONTATO (Formspree por fetch)
+     Com Accept: application/json o Formspree responde em JSON em vez
+     de redirecionar. O botão fica travado até a resposta chegar, que é
+     o que o próprio Formspree pede para não estourar o limite.
+     Se o fetch nem sair (rede, navegador antigo), cai no envio normal.
+     --------------------------------------------------------------- */
+  var form = document.getElementById('form-contato');
+  var statusForm = document.getElementById('form-status');
+
+  function avisar(estado) {
+    var idioma = raiz.getAttribute('data-lang') === 'pt' ? 'pt' : 'en';
+    statusForm.textContent = statusForm.getAttribute('data-msg-' + idioma + '-' + estado);
+    statusForm.setAttribute('data-estado', estado === 'ok' ? 'ok' : 'erro');
+    statusForm.hidden = false;
+  }
+
+  if (form && statusForm && window.fetch && window.FormData) {
+    form.addEventListener('submit', function (evento) {
+      evento.preventDefault();
+
+      if (form.action.indexOf('SEU_ID_AQUI') !== -1) {
+        avisar('sem-id');
+        return;
+      }
+
+      var botao = form.querySelector('button[type="submit"]');
+      botao.disabled = true;
+
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
+      }).then(function (resposta) {
+        if (resposta.ok) {
+          form.reset();
+          avisar('ok');
+        } else {
+          avisar('erro');
+        }
+      }).catch(function () {
+        avisar('erro');
+      }).then(function () {
+        botao.disabled = false;
+      });
+    });
+  }
 
   /* ---------------------------------------------------------------
      FILTRO DE PROJETOS

@@ -156,16 +156,18 @@ Abaixo de 900px o radar **sai inteiro** (`display: none`), em vez de descer para
 
 ## 3. Configurar o formulário (Formspree)
 
-Sem isso o formulário não envia nada.
+**Já configurado** (ID `xrpqvgpw`, recebe em contato.raulguilherme@gmail.com). Os passos abaixo servem só se um dia você trocar de formulário.
 
 1. Crie uma conta grátis em <https://formspree.io>
 2. **New Form** → escolha o e-mail que vai receber as mensagens
 3. Ele mostra um endpoint no formato `https://formspree.io/f/xayzbwqd`. Copie a parte final — o ID (`xayzbwqd`)
 4. No `index.html`, procure por `SEU_ID_AQUI` e troque:
    ```html
-   <form class="revelar" action="https://formspree.io/f/xayzbwqd" method="POST">
+   <form class="revelar" id="form-contato" action="https://formspree.io/f/xayzbwqd" method="POST">
    ```
 5. Envie uma mensagem de teste. No primeiro envio o Formspree pede confirmação por e-mail.
+
+O envio é feito por JavaScript: quem escreve continua na página e vê a confirmação embaixo do botão, no idioma em que está lendo. Enquanto `SEU_ID_AQUI` estiver no lugar, o formulário não tenta enviar e mostra um aviso pedindo para usar o e-mail direto, para nenhuma mensagem se perder. O assunto do e-mail que chega para você está no campo `_subject`.
 
 O plano grátis aceita **50 envios por mês**. O campo `_gotcha` já está no formulário: é uma armadilha invisível que o Formspree usa para descartar robôs — não mexa nele.
 
